@@ -2,7 +2,9 @@ import admin from 'firebase-admin';
 import serviceAccount from '../../firebase-admin-sdk.json' assert { type: 'json' };
 
 class Services {
-  constructor() {
+  constructor() {}
+
+  load = () => {
     this.firebaseAdmin = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       databaseURL:

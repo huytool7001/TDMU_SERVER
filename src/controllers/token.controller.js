@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import Token from '../models/token.js';
-import Services from '../services/index.js';
+import Services from '../utils/services.js';
 
 const { ObjectId } = mongoose.Types;
 
@@ -41,16 +41,8 @@ class TokenController {
     }
 
     return Services.firebaseMessaging
-      .send(
-        {
-          token: deviceToken,
-          notification: { body: 'hello', title: 'tdmu' },
-          data: {},
-        },
-        true
-      )
-      .then(async (response) => {
-        console.log("🚀 ~ file: token.controller.js:53 ~ TokenController ~ .then ~ response:", response)
+      .send({ token: deviceToken })
+      .then(async () => {
         const existed = await this.findByToken(deviceToken);
         if (existed) {
           existed.userId = userId;
