@@ -1,8 +1,5 @@
 import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
+import { DATABASE_URL } from '../configs/constant.js';
 class Database {
   constructor() {}
 
@@ -10,7 +7,7 @@ class Database {
     mongoose.set('autoIndex', true);
 
     return mongoose
-      .connect(process.env.DATABASE_URL, {
+      .connect(DATABASE_URL, {
         useNewUrlParser: true,
         dbName: 'TDMU',
         autoIndex: true,

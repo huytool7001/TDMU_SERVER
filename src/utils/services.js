@@ -2,7 +2,11 @@ import admin from 'firebase-admin';
 import serviceAccount from '../../firebase-admin-sdk.json' assert { type: 'json' };
 
 class Services {
-  constructor() {}
+  constructor() {
+    this.firebaseAdmin = null;
+
+    this.firebaseMessaging = null;
+  }
 
   load = () => {
     this.firebaseAdmin = admin.initializeApp({
@@ -12,7 +16,7 @@ class Services {
     });
 
     this.firebaseMessaging = this.firebaseAdmin.messaging();
-  }
+  };
 }
 
 const services = new Services();

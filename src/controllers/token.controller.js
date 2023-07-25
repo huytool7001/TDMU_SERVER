@@ -27,21 +27,21 @@ class TokenController {
   };
 
   create = async (req, res) => {
-    const { deviceToken, userId, appId } = req.body;
+    const { deviceToken, userId, userToken, appId } = req.body;
     console.log(
       '🚀 ~ file: token.controller.js:31 ~ TokenController ~ create= ~ deviceToken, userId, appId:',
       deviceToken,
       userId,
       appId
     );
-    if (!deviceToken || !userId) {
+    if (!deviceToken || !userId || !userToken) {
       return res
         .status(404)
-        .json({ message: 'deviceToken and userId is required' });
+        .json({ message: 'deviceToken, userId and userToken is required' });
     }
 
     return Services.firebaseMessaging
-      .send({ token: deviceToken })
+      .send({ token: deviceToken, notification: {title: 'TDMU', body: 'Hello'} })
       .then(async () => {
         const existed = await this.findByToken(deviceToken);
         if (existed) {
