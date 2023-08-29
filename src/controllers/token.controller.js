@@ -60,10 +60,7 @@ class TokenController {
         if (existed) {
           existed.userId = userId;
           existed.appId = appId || '';
-
-          if (formattedSchedule.length) {
-            existed.schedule = formattedSchedule;
-          }
+          existed.schedule = formattedSchedule;
 
           await existed.save();
           return res.status(200).json(existed);
