@@ -1,5 +1,7 @@
 import { Schema, model } from 'mongoose';
 
+const { Mixed } = Schema.Types;
+
 const schema = new Schema(
   {
     deviceToken: {
@@ -9,6 +11,7 @@ const schema = new Schema(
     },
     userId: String,
     appId: String,
+    schedule: Mixed,
   },
   {
     collection: 'tokens',

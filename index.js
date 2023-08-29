@@ -7,6 +7,7 @@ import router from './src/routes/index.js';
 import Database from './src/utils/database.js';
 import Services from './src/utils/services.js';
 import Queue from './src/utils/queue.js';
+import Schedule from './src/utils/schedule.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -14,6 +15,7 @@ server.listen(8000, (req, res) => {
   Database.load();
   Services.load();
   Queue.load();
+  Schedule.load();
   console.log('Server is started');
 });
 

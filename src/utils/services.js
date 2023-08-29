@@ -4,7 +4,6 @@ import serviceAccount from '../../firebase-admin-sdk.json' assert { type: 'json'
 class Services {
   constructor() {
     this.firebaseAdmin = null;
-
     this.firebaseMessaging = null;
   }
 

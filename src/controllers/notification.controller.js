@@ -5,57 +5,31 @@ import services from '../utils/services.js';
 class NotificationController {
   constructor() {}
 
-  scheduleNotify = async (req, res) => {
-    const { schedule, userId } = req.body;
-
-    let deviceTokens = await tokenController.findByUserIds([userId]);
-    deviceTokens = deviceTokens[0].deviceTokens;
-
-    try {
-      schedule?.ds_tuan_tkb.forEach((tuan) => {
-        tuan.ds_thoi_khoa_bieu.forEach(async (thoi_khoa_bieu) => {
-          const gio_bat_dau = schedule.ds_tiet_trong_ngay.find(
-            (tiet) => tiet.tiet === thoi_khoa_bieu.tiet_bat_dau
-          ).gio_bat_dau;
-
-          let startTime = gio_bat_dau.split(':');
-          startTime =
-            parseInt(startTime[0], 10) * 3600000 +
-            parseInt(startTime[1], 10) * 60000;
-
-          const date = new Date(thoi_khoa_bieu.ngay_hoc);
-          const delay = date.getTime() + startTime - Date.now() - 15 * 60000;
-
-          if (delay > 0) {
-            await queue.schedule.add(
-              {
-                schedule: thoi_khoa_bieu,
-                deviceTokens,
-                startTime: gio_bat_dau,
-              },
-              {
-                delay,
-              }
-            );
-          }
-        });
+  scheduleAllStudents = async () => {
+    const date = new Date();
+    const students = await tokenController.search();
+    for await (let student of students) {
+      student.schedule.forEach((subject) => {
+        if (date.toDateString() === subject.ngay_hoc.toDateString()) {
+          console.log('🚀 ~ Job queue added');
+          queue.schedule.add(
+            { ...subject, deviceToken: student.deviceToken },
+            { delay: subject.delay }
+          );
+        }
       });
-    } catch (err) {
-      console.log(err);
-      return res.status(400).json(err);
     }
-
-    return res.status(400).json({ message: 'successfully' });
   };
 
-  handleScheduleNotificationJob = async (job) => {
-    const { schedule, startTime, deviceTokens } = job.data;
+  handleScheduleNotificationJobQueue = async (job) => {
+    console.log("🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleNotificationJobQueue= ~ job.data:", job.data)
+    const { subject, room, time, deviceToken } = job.data;
     await services.firebaseMessaging
-      .sendEachForMulticast({
-        tokens: deviceTokens,
+      .send({
+        token: deviceToken,
         notification: {
           title: 'TDMU',
-          body: `Bạn sắp có môn học ${schedule.ten_mon} vào lúc ${startTime} tại phòng ${schedule.ma_phong}`,
+          body: `Bạn sắp có môn học ${subject} vào lúc ${time} tại phòng ${room}`,
         },
       })
       .catch((err) => {

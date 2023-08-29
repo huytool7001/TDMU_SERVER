@@ -18,7 +18,7 @@ class Queue {
     this.failed.process(this.removeJob);
 
     this.schedule = new Bull('schedule', redisConnection);
-    this.schedule.process(notificationController.handleScheduleNotificationJob);
+    this.schedule.process(notificationController.handleScheduleNotificationJobQueue);
 
     this.setUpListeners('schedule');
   };
