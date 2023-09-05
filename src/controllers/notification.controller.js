@@ -1,11 +1,12 @@
 import tokenController from './token.controller.js';
 import queue from '../utils/queue.js';
 import services from '../utils/services.js';
+import dkmhController from './dkmh.controller.js';
 
 class NotificationController {
   constructor() {}
 
-  scheduleAllStudents = async () => {
+  notifyAllStudentSchedule = async () => {
     const date = new Date();
     const students = await tokenController.search();
     for await (let student of students) {
@@ -22,7 +23,10 @@ class NotificationController {
   };
 
   handleScheduleNotificationJobQueue = async (job) => {
-    console.log("🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleNotificationJobQueue= ~ job.data:", job.data)
+    console.log(
+      '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleNotificationJobQueue= ~ job.data:',
+      job.data
+    );
     const { subject, room, time, deviceToken } = job.data;
     await services.firebaseMessaging
       .send({
@@ -35,6 +39,29 @@ class NotificationController {
       .catch((err) => {
         console.log(err);
       });
+  };
+
+  notifyArticle = async () => {
+    const date = new Date();
+    const articles = await dkmhController.getArticle();
+    const students = await tokenController.search();
+    for (let article of articles) {
+      if (
+        new Date(article.ngay_hieu_chinh).toDateString() === date.toDateString()
+      ) {
+        await services.firebaseMessaging
+          .sendEachForMulticast({
+            tokens: students.map((student) => student.deviceToken),
+            notification: {
+              title: 'TDMU',
+              body: article.tieu_de,
+            },
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    }
   };
 }
 

@@ -142,6 +142,39 @@ class DKMHController {
 
     return data;
   };
+
+  getArticle = async () => {
+    return fetch(`${DKMH_API_URL}/web/w-locdsbaiviet`, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filter: {
+          is_hien_thi: true,
+        },
+        additional: {
+          paging: {
+            limit: 100,
+            page: 1,
+          },
+          ordering: [
+            {
+              name: 'do_uu_tien',
+              order_type: 1,
+            },
+            {
+              name: 'ngay_dang_tin',
+              order_type: 1,
+            },
+          ],
+        },
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => response.data.ds_bai_viet)
+      .catch((err) => console.log(err));
+  };
 }
 
 const dkmhController = new DKMHController();

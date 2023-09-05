@@ -5,8 +5,12 @@ class Schedule {
   constructor() {}
 
   load = () => {
-    scheduleJob('notification', '0 0 0 * * *', () =>
-      notificationController.scheduleAllStudents()
+    scheduleJob('schedule', '0 0 0 * * *', () =>
+      notificationController.notifyAllStudentSchedule()
+    );
+
+    scheduleJob('article', '59 59 23 * * *', () =>
+      notificationController.notifyArticle()
     );
   };
 }
