@@ -14,9 +14,9 @@ const schema = new Schema(
     schedule: Mixed,
   },
   {
-    collection: 'tokens',
+    collection: 'users',
   }
 );
 
-const Token = model('tokens', schema);
-export default Token;
+const User = model('users', schema);
+export default User;

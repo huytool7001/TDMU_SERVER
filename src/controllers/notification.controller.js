@@ -1,4 +1,4 @@
-import tokenController from './token.controller.js';
+import userController from './user.controller.js';
 import queue from '../utils/queue.js';
 import services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
@@ -8,7 +8,7 @@ class NotificationController {
 
   notifyAllStudentSchedule = async () => {
     const date = new Date();
-    const students = await tokenController.search();
+    const students = await userController.search();
     for await (let student of students) {
       student.schedule.forEach((subject) => {
         if (date.toDateString() === subject.ngay_hoc.toDateString()) {
@@ -44,7 +44,7 @@ class NotificationController {
   notifyArticle = async () => {
     const date = new Date();
     const articles = await dkmhController.getArticle();
-    const students = await tokenController.search();
+    const students = await userController.search();
     for (let article of articles) {
       if (
         new Date(article.ngay_hieu_chinh).toDateString() === date.toDateString()

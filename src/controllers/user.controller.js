@@ -1,24 +1,24 @@
 import mongoose from 'mongoose';
-import Token from '../models/token.js';
+import User from '../models/user.js';
 import Services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
 
 const { ObjectId } = mongoose.Types;
 
-class TokenController {
+class UserController {
   constructor() {}
 
   search = async () => {
-    return Token.find().lean();
+    return User.find().lean();
   };
 
   findByToken = async (deviceToken) => {
-    const token = await Token.findOne({ deviceToken });
-    return token;
+    const user = await User.findOne({ deviceToken });
+    return user;
   };
 
   findByUserIds = async (userIds) => {
-    const tokens = await Token.aggregate([
+    const users = await User.aggregate([
       { $match: { userId: { $in: userIds } } },
       {
         $group: {
@@ -28,7 +28,7 @@ class TokenController {
       },
     ]);
 
-    return tokens;
+    return users;
   };
 
   create = async (req, res) => {
@@ -65,7 +65,7 @@ class TokenController {
           await existed.save();
           return res.status(200).json(existed);
         } else {
-          const token = await Token.create({
+          const user = await User.create({
             _id: new ObjectId(),
             deviceToken,
             userId,
@@ -73,11 +73,11 @@ class TokenController {
             schedule: formattedSchedule,
           });
 
-          if (!token) {
-            return res.status(404).json({ message: 'Create token failed' });
+          if (!user) {
+            return res.status(404).json({ message: 'Create user failed' });
           }
 
-          return res.status(200).json(token);
+          return res.status(200).json(user);
         }
       })
       .catch((err) => {
@@ -86,16 +86,16 @@ class TokenController {
   };
 
   update = async (userId, data) => {
-    return Token.findOneAndUpdate(userId, data);
+    return User.findOneAndUpdate(userId, data);
   };
 
   delete = async (req, res) => {
     const { deviceToken } = req.params;
 
-    const token = await Token.findOneAndDelete({ deviceToken });
-    return res.status(200).json(token);
+    const user = await User.findOneAndDelete({ deviceToken });
+    return res.status(200).json(user);
   };
 }
 
-const tokenController = new TokenController();
-export default tokenController;
+const userController = new UserController();
+export default userController;
