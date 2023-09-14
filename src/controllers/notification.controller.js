@@ -15,7 +15,7 @@ class NotificationController {
           console.log('🚀 ~ Job queue added');
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
-            { delay: subject.delay }
+            { delay: subject.delay - student.timer.schedule }
           );
         }
       });

@@ -8,6 +8,15 @@ const { ObjectId } = mongoose.Types;
 class UserController {
   constructor() {}
 
+  get = async (req, res) => {
+    const { deviceToken } = req.params;
+    const user = await User.findOne({ deviceToken });
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+    return res.status(200).json(user);
+  };
+
   search = async () => {
     return User.find().lean();
   };
@@ -85,13 +94,20 @@ class UserController {
       });
   };
 
-  update = async (userId, data) => {
-    return User.findOneAndUpdate(userId, data);
+  update = async (req, res) => {
+    const { deviceToken } = req.params;
+    console.log(req.body);
+    const user = await User.findOneAndUpdate({ deviceToken }, req.body);
+
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+    
+    return res.status(200).json(user);
   };
 
   delete = async (req, res) => {
     const { deviceToken } = req.params;
-
     const user = await User.findOneAndDelete({ deviceToken });
     return res.status(200).json(user);
   };

@@ -1,4 +1,5 @@
 import { Schema, model } from 'mongoose';
+import { NOTIFICATION_TIMER } from '../configs/constant.js';
 
 const { Mixed } = Schema.Types;
 
@@ -12,6 +13,16 @@ const schema = new Schema(
     userId: String,
     appId: String,
     schedule: Mixed,
+    timer: {
+      schedule: {
+        type: Number,
+        default: NOTIFICATION_TIMER.SCHEDULE,
+      },
+      exam: {
+        type: Number,
+        default: NOTIFICATION_TIMER.EXAM,
+      },
+    },
   },
   {
     collection: 'users',

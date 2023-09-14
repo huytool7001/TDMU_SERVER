@@ -124,7 +124,7 @@ class DKMHController {
 
             const ngay_hoc = new Date(mon.ngay_hoc);
             const delay =
-              ngay_hoc.getTime() + startTime - Date.now() - 15 * 60000;
+              ngay_hoc.getTime() + startTime - Date.now();
 
             if (delay > 0) {
               data.push({
