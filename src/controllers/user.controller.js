@@ -55,21 +55,23 @@ class UserController {
       })
       .then(async () => {
         const semester = await dkmhController.getSemester(userToken);
-        let formattedSchedule = [];
+        let schedule = [];
+        let examSchedule = [];
         if (semester) {
-          const schedule = await dkmhController.getSchedule(
+          schedule = await dkmhController.getSchedule(
             userToken,
             semester.hoc_ky
           );
 
-          formattedSchedule = await dkmhController.formatSchedule(schedule);
+          examSchedule = await dkmhController.getExamSchedule(userToken, semester.hoc_ky);
         }
 
         const existed = await this.findByToken(deviceToken);
         if (existed) {
           existed.userId = userId;
           existed.appId = appId || '';
-          existed.schedule = formattedSchedule;
+          existed.schedule = schedule;
+          existed.examSchedule = examSchedule;
 
           await existed.save();
           return res.status(200).json(existed);
@@ -79,7 +81,8 @@ class UserController {
             deviceToken,
             userId,
             appId: appId || '',
-            schedule: formattedSchedule,
+            schedule,
+            examSchedule,
           });
 
           if (!user) {

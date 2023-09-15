@@ -13,6 +13,7 @@ const schema = new Schema(
     userId: String,
     appId: String,
     schedule: Mixed,
+    examSchedule: Mixed,
     timer: {
       schedule: {
         type: Number,

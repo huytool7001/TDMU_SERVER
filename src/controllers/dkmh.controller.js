@@ -87,6 +87,7 @@ class DKMHController {
     })
       .then((response) => response.json())
       .then((response) => response.data)
+      .then((response) => this.formatSchedule(response))
       .catch((err) => console.log(err));
   };
 
@@ -123,8 +124,7 @@ class DKMHController {
               parseInt(startTime[1], 10) * 60000;
 
             const ngay_hoc = new Date(mon.ngay_hoc);
-            const delay =
-              ngay_hoc.getTime() + startTime - Date.now();
+            const delay = ngay_hoc.getTime() + startTime - Date.now();
 
             if (delay > 0) {
               data.push({
@@ -174,6 +174,68 @@ class DKMHController {
       .then((response) => response.json())
       .then((response) => response.data.ds_bai_viet)
       .catch((err) => console.log(err));
+  };
+
+  getExamSchedule = async (token, semester) => {
+    return fetch(`${DKMH_API_URL}/epm/w-locdslichthisvtheohocky`, {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filter: {
+          hoc_ky: semester,
+        },
+        additional: {
+          paging: {
+            limit: 100,
+            page: 1,
+          },
+          ordering: [
+            {
+              name: null,
+              order_type: null,
+            },
+          ],
+        },
+      }),
+    })
+      .then((response) => response.json())
+      .then((response) => response.data)
+      .then((response) => this.formatExamSchedule(response))
+      .catch((err) => console.log(err));
+  };
+
+  formatExamSchedule = async (schedule) => {
+    const data = [];
+    const date = new Date();
+
+    schedule.ds_lich_thi?.forEach((mon) => {
+      let dateParts = mon.ngay_thi?.split('/');
+      mon.ngay_thi = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+
+      if (mon.ngay_thi >= date) {
+        let startTime = mon.gio_bat_dau.split(':');
+        startTime =
+          parseInt(startTime[0], 10) * 3600000 +
+          parseInt(startTime[1], 10) * 60000;
+
+        const ngay_thi = new Date(mon.ngay_thi);
+        const delay = ngay_thi.getTime() + startTime - Date.now();
+
+        if (delay > 0) {
+          data.push({
+            subject: mon.ten_mon,
+            time: mon.gio_bat_dau,
+            ngay_thi,
+            delay,
+          });
+        }
+      }
+    });
+
+    return data;
   };
 }
 

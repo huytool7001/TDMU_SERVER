@@ -6,6 +6,7 @@ class Queue {
     this.completed = null;
     this.failed = null;
     this.schedule = null;
+    this.examSchedule = null;
   }
 
   load = () => {
@@ -20,7 +21,11 @@ class Queue {
     this.schedule = new Bull('schedule', redisConnection);
     this.schedule.process(notificationController.handleScheduleNotificationJobQueue);
 
+    this.examSchedule = new Bull('examSchedule', redisConnection);
+    this.examSchedule.process(notificationController.handleExamScheduleNotificationJobQueue);
+
     this.setUpListeners('schedule');
+    this.setUpListeners('examSchedule');
   };
 
   setUpListeners = async (queue) => {

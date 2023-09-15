@@ -19,6 +19,16 @@ class NotificationController {
           );
         }
       });
+
+      student.examSchedule.forEach((subject) => {
+        if (date.toLocaleDateString('en-GB') === subject.ngay_thi) {
+          console.log('🚀 ~ Job queue added');
+          queue.examSchedule.add(
+            { ...subject, deviceToken: student.deviceToken },
+            { delay: subject.delay - student.timer.exam }
+          );
+        }
+      });
     }
   };
 
@@ -34,6 +44,25 @@ class NotificationController {
         notification: {
           title: 'TDMU',
           body: `Bạn sắp có môn học ${subject} vào lúc ${time} tại phòng ${room}`,
+        },
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
+
+  handleExamScheduleNotificationJobQueue = async (job) => {
+    console.log(
+      '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleExamScheduleNotificationJobQueue= ~ job.data:',
+      job.data
+    );
+    const { subject, time, deviceToken } = job.data;
+    await services.firebaseMessaging
+      .send({
+        token: deviceToken,
+        notification: {
+          title: 'TDMU',
+          body: `Bạn có lịch thi môn ${subject} vào lúc ${time}`,
         },
       })
       .catch((err) => {
