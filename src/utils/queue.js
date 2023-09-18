@@ -1,5 +1,6 @@
 import Bull from 'bull';
 import notificationController from '../controllers/notification.controller.js';
+import announcementController from '../controllers/announcement.controller.js';
 
 class Queue {
   constructor() {
@@ -24,8 +25,12 @@ class Queue {
     this.examSchedule = new Bull('examSchedule', redisConnection);
     this.examSchedule.process(notificationController.handleExamScheduleNotificationJobQueue);
 
+    this.announcement = new Bull('announcement', redisConnection);
+    this.announcement.process(announcementController.handleAnnouncementJobQueue);
+
     this.setUpListeners('schedule');
     this.setUpListeners('examSchedule');
+    this.setUpListeners('announcement');
   };
 
   setUpListeners = async (queue) => {
