@@ -12,7 +12,6 @@ class NotificationController {
     for await (let student of students) {
       student.schedule.forEach((subject) => {
         if (date.toDateString() === subject.ngay_hoc.toDateString()) {
-          console.log('🚀 ~ Job queue added');
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
             { delay: subject.delay - student.timer.schedule }
@@ -21,8 +20,7 @@ class NotificationController {
       });
 
       student.examSchedule.forEach((subject) => {
-        if (date.toLocaleDateString('en-GB') === subject.ngay_thi) {
-          console.log('🚀 ~ Job queue added');
+        if (date.toDateString() === subject.ngay_thi.toDateString()) {
           queue.examSchedule.add(
             { ...subject, deviceToken: student.deviceToken },
             { delay: subject.delay - student.timer.exam }

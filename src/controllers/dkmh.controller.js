@@ -94,6 +94,7 @@ class DKMHController {
   formatSchedule = async (schedule) => {
     const data = [];
     const date = new Date();
+    date.setHours(0, 0, 0, 0);
 
     schedule.ds_tuan_tkb.forEach((tuan) => {
       let dateParts = tuan.ngay_bat_dau?.split('/');
@@ -112,7 +113,7 @@ class DKMHController {
 
       if (tuan.ngay_ket_thuc >= date) {
         tuan.ds_thoi_khoa_bieu.forEach((mon) => {
-          mon.ngay_hoc = new Date(mon.ngay_hoc);
+          mon.ngay_hoc = new Date(`${mon.ngay_hoc}.000Z`);
           if (mon.ngay_hoc >= date) {
             const gio_bat_dau = schedule.ds_tiet_trong_ngay.find(
               (tiet) => tiet.tiet === mon.tiet_bat_dau
@@ -123,15 +124,14 @@ class DKMHController {
               parseInt(startTime[0], 10) * 3600000 +
               parseInt(startTime[1], 10) * 60000;
 
-            const ngay_hoc = new Date(mon.ngay_hoc);
-            const delay = ngay_hoc.getTime() + startTime - Date.now();
+            const delay = mon.ngay_hoc.getTime() + startTime - date.getTime();
 
             if (delay > 0) {
               data.push({
                 subject: mon.ten_mon,
                 room: mon.ma_phong,
                 time: gio_bat_dau,
-                ngay_hoc,
+                ngay_hoc: mon.ngay_hoc,
                 delay,
               });
             }
@@ -210,10 +210,12 @@ class DKMHController {
   formatExamSchedule = async (schedule) => {
     const data = [];
     const date = new Date();
+    date.setHours(0, 0, 0, 0);
 
     schedule.ds_lich_thi?.forEach((mon) => {
       let dateParts = mon.ngay_thi?.split('/');
       mon.ngay_thi = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+      mon.ngay_thi.setHours(0, 0, 0, 0);
 
       if (mon.ngay_thi >= date) {
         let startTime = mon.gio_bat_dau.split(':');
@@ -221,14 +223,13 @@ class DKMHController {
           parseInt(startTime[0], 10) * 3600000 +
           parseInt(startTime[1], 10) * 60000;
 
-        const ngay_thi = new Date(mon.ngay_thi);
-        const delay = ngay_thi.getTime() + startTime - Date.now();
+        const delay = mon.ngay_thi.getTime() + startTime - date.getTime();
 
         if (delay > 0) {
           data.push({
             subject: mon.ten_mon,
             time: mon.gio_bat_dau,
-            ngay_thi,
+            ngay_thi: mon.ngay_thi,
             delay,
           });
         }
