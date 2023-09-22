@@ -44,7 +44,7 @@ class UserController {
     const { deviceToken, userId, userToken, appId } = req.body;
     if (!deviceToken || !userId || !userToken) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: 'deviceToken, userId and userToken is required' });
     }
 
@@ -54,6 +54,8 @@ class UserController {
         notification: { title: 'TDMU', body: 'Hello' },
       })
       .then(async () => {
+        const profile = await dkmhController.getProfile(userToken);
+
         const semester = await dkmhController.getSemester(userToken);
         let schedule = [];
         let examSchedule = [];
@@ -72,6 +74,8 @@ class UserController {
           existed.appId = appId || '';
           existed.schedule = schedule;
           existed.examSchedule = examSchedule;
+          existed.class = profile.lop || '';
+          existed.faculty = profile.khoa || '';
 
           await existed.save();
           return res.status(200).json(existed);
@@ -83,17 +87,19 @@ class UserController {
             appId: appId || '',
             schedule,
             examSchedule,
+            class: profile.lop,
+            faculty: profile.khoa,
           });
 
           if (!user) {
-            return res.status(404).json({ message: 'Create user failed' });
+            return res.status(400).json({ message: 'Create user failed' });
           }
 
           return res.status(200).json(user);
         }
       })
       .catch((err) => {
-        return res.status(404).json({ message: err });
+        return res.status(400).json({ message: err });
       });
   };
 

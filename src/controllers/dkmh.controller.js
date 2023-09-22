@@ -238,6 +238,19 @@ class DKMHController {
 
     return data;
   };
+
+  getProfile = async (token) => {
+    return fetch(`${DKMH_API_URL}/dkmh/w-locsinhvieninfo`, {
+      method: 'post',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => response.json())
+      .then((response) => response.data)
+      .catch((err) => console.log(err));
+  }
 }
 
 const dkmhController = new DKMHController();

@@ -11,6 +11,8 @@ const schema = new Schema(
       unique: true,
     },
     userId: String,
+    faculty: String,
+    class: String,
     appId: String,
     schedule: Mixed,
     examSchedule: Mixed,
