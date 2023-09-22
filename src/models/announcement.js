@@ -22,7 +22,8 @@ const schema = new Schema(
       type: String,
       required: true,
     },
-    to: Mixed,
+    faculties: Mixed,
+    classes: Mixed,
     at: {
       type: Number,
       required: true,

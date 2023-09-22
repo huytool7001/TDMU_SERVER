@@ -10,6 +10,7 @@ router.route('/').post(announcementController.create);
 
 router.route('/:id').put(announcementController.update);
 
+router.route('/').delete(announcementController.deleteMany);
 router.route('/:id').delete(announcementController.delete);
 
 export default router;
