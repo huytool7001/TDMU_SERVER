@@ -5,6 +5,7 @@ class Database {
 
   load = () => {
     mongoose.set('autoIndex', true);
+    mongoose.set('debug', true);
 
     return mongoose
       .connect(DATABASE_URL, {
