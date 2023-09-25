@@ -22,21 +22,27 @@ const schema = new Schema(
       type: String,
       required: true,
     },
-    faculties: Mixed,
-    classes: Mixed,
+    faculties: {
+      type: Mixed,
+      default: [],
+    },
+    classes: {
+      type: Mixed,
+      default: [],
+    },
     at: {
       type: Number,
       required: true,
     },
     status: {
-      type:String,
+      type: String,
       enum: Object.values(ANNOUNCEMENT_STATUS),
-      default: ANNOUNCEMENT_STATUS.UNSENT
+      default: ANNOUNCEMENT_STATUS.UNSENT,
     },
     showing: {
       type: Boolean,
       default: true,
-    }
+    },
   },
   {
     collection: 'announcements',
