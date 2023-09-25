@@ -49,7 +49,7 @@ class AnnouncementController {
       .skip(skip)
       .limit(limit);
 
-    const totalCount = await Announcement.count();
+    const totalCount = await Announcement.count(query);
 
     return res.status(200).json({ announcements, totalCount });
   };
