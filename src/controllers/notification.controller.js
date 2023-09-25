@@ -7,15 +7,39 @@ class NotificationController {
   constructor() {}
 
   notifyAllStudentSchedule = async () => {
-    const date = new Date();
+    const date = new Date('2023-09-28T00:00:00.000+00:00');
     const students = await userController.search();
     for await (let student of students) {
       student.schedule.forEach((subject) => {
-        if (date.toDateString() === subject.ngay_hoc.toDateString()) {
+        if (
+          date.toDateString() === subject.ngay_hoc.toDateString() &&
+          subject.delay > 0
+        ) {
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
             { delay: subject.delay - student.timer.schedule }
           );
+
+          let lastWeek = new Date(subject.ngay_hoc);
+          lastWeek = new Date(lastWeek.getTime() - 3600000 * 24 * 7);
+
+          const lastWeekSchedule = student.schedule.filter(
+            (item) => item.ngay_hoc.toDateString() === lastWeek.toDateString()
+          );
+
+          if (
+            !lastWeekSchedule.find(
+              (sameSubject) =>
+                sameSubject.subject === subject.subject &&
+                sameSubject.room === subject.room &&
+                sameSubject.time === subject.time
+            )
+          ) {
+            queue.scheduleUpdate.add({
+              ...subject,
+              deviceToken: student.deviceToken,
+            });
+          }
         }
       });
 
@@ -40,7 +64,7 @@ class NotificationController {
       .send({
         token: deviceToken,
         notification: {
-          title: 'TDMU',
+          title: 'Thời khóa biểu',
           body: `Bạn sắp có môn học ${subject} vào lúc ${time} tại phòng ${room}`,
         },
       })
@@ -59,7 +83,7 @@ class NotificationController {
       .send({
         token: deviceToken,
         notification: {
-          title: 'TDMU',
+          title: 'Lịch thi',
           body: `Bạn có lịch thi môn ${subject} vào lúc ${time}`,
         },
       })
@@ -80,7 +104,7 @@ class NotificationController {
           .sendEachForMulticast({
             tokens: students.map((student) => student.deviceToken),
             notification: {
-              title: 'TDMU',
+              title: 'Thông báo',
               body: article.tieu_de,
             },
           })
@@ -89,6 +113,25 @@ class NotificationController {
           });
       }
     }
+  };
+
+  handleScheduleUpdateNotificationJobQueue = async (job) => {
+    console.log(
+      '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleUpdateNotificationJobQueue= ~ job.data:',
+      job.data
+    );
+    const { subject, room, time, deviceToken } = job.data;
+    await services.firebaseMessaging
+      .send({
+        token: deviceToken,
+        notification: {
+          title: 'Thời khóa biểu thay đổi với tuần trước',
+          body: `Bạn có môn học ${subject} vào lúc ${time} tại phòng ${room} hôm nay`,
+        },
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   };
 }
 
