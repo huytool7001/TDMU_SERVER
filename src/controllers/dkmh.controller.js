@@ -87,11 +87,11 @@ class DKMHController {
     })
       .then((response) => response.json())
       .then((response) => response.data)
-      .then((response) => this.formatSchedule(response))
+      .then((response) => this.analyzeSchedule(response))
       .catch((err) => console.log(err));
   };
 
-  formatSchedule = async (schedule) => {
+  analyzeSchedule = async (schedule) => {
     const data = [];
     const date = new Date();
     date.setHours(0, 0, 0, 0);
@@ -111,33 +111,34 @@ class DKMHController {
         +dateParts[0]
       );
 
-      if (tuan.ngay_ket_thuc >= date) {
-        tuan.ds_thoi_khoa_bieu.forEach((mon) => {
-          mon.ngay_hoc = new Date(`${mon.ngay_hoc}.000Z`);
-          if (mon.ngay_hoc >= date) {
-            const gio_bat_dau = schedule.ds_tiet_trong_ngay.find(
-              (tiet) => tiet.tiet === mon.tiet_bat_dau
-            ).gio_bat_dau;
+      tuan.ds_thoi_khoa_bieu.forEach((mon) => {
+        mon.ngay_hoc = new Date(`${mon.ngay_hoc}.000Z`);
+        const gio_bat_dau = schedule.ds_tiet_trong_ngay.find(
+          (tiet) => tiet.tiet === mon.tiet_bat_dau
+        ).gio_bat_dau;
 
-            let startTime = gio_bat_dau.split(':');
-            startTime =
-              parseInt(startTime[0], 10) * 3600000 +
-              parseInt(startTime[1], 10) * 60000;
+        let startTime = gio_bat_dau.split(':');
+        startTime =
+          parseInt(startTime[0], 10) * 3600000 +
+          parseInt(startTime[1], 10) * 60000;
 
-            const delay = mon.ngay_hoc.getTime() + startTime - date.getTime();
+        const delay = mon.ngay_hoc.getTime() + startTime - date.getTime();
 
-            if (delay > 0) {
-              data.push({
-                subject: mon.ten_mon,
-                room: mon.ma_phong,
-                time: gio_bat_dau,
-                ngay_hoc: mon.ngay_hoc,
-                delay,
-              });
-            }
-          }
+        let ma_phong = mon.ma_phong.split('-');
+        if (ma_phong.length === 4) {
+          ma_phong = `${ma_phong[0]}-${ma_phong[1]}`;
+        } else {
+          ma_phong = ma_phong[0];
+        }
+
+        data.push({
+          subject: mon.ten_mon,
+          room: ma_phong,
+          time: gio_bat_dau,
+          ngay_hoc: mon.ngay_hoc,
+          delay,
         });
-      }
+      });
     });
 
     return data;
@@ -203,11 +204,11 @@ class DKMHController {
     })
       .then((response) => response.json())
       .then((response) => response.data)
-      .then((response) => this.formatExamSchedule(response))
+      .then((response) => this.analyzeExamSchedule(response))
       .catch((err) => console.log(err));
   };
 
-  formatExamSchedule = async (schedule) => {
+  analyzeExamSchedule = async (schedule) => {
     const data = [];
     const date = new Date();
     date.setHours(0, 0, 0, 0);
@@ -250,7 +251,7 @@ class DKMHController {
       .then((response) => response.json())
       .then((response) => response.data)
       .catch((err) => console.log(err));
-  }
+  };
 }
 
 const dkmhController = new DKMHController();
