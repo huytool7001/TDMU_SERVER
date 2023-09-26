@@ -45,10 +45,10 @@ const schema = new Schema(
     },
   },
   {
-    collection: 'announcements',
+    collection: 'announcement',
     timestamps: true,
   }
 );
 
-const Announcement = model('announcements', schema);
+const Announcement = model('announcement', schema);
 export default Announcement;

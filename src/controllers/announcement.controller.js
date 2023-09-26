@@ -21,7 +21,7 @@ class AnnouncementController {
   };
 
   search = async (req, res) => {
-    const { query } = req;
+    let { query } = req;
     console.log(
       '🚀 ~ file: announcement.controller.js:22 ~ AnnouncementController ~ search= ~ query:',
       query
@@ -44,6 +44,17 @@ class AnnouncementController {
       query.title = { $regex: '.*' + query.title + '.*', $options: 'i' };
     }
 
+    if (query.userId) {
+      const user = await User.findOne({ userId: query.userId }).lean();
+      if (user) {
+        query = {
+          ...query,
+          $or: [{ faculties: user.faculty }, { classes: user.class }],
+        };
+      }
+      delete query.userId;
+    }
+
     const announcements = await Announcement.find(query)
       .sort(sort)
       .skip(skip)
@@ -62,7 +73,7 @@ class AnnouncementController {
           error: 'Please fill in all fields',
         });
       }
-      
+
       const announcement = await Announcement.create({
         ...req.body,
         id: Date.now(),
@@ -76,8 +87,11 @@ class AnnouncementController {
       if (classes?.length && !classes.includes('ALL')) {
         query.class = { $in: classes };
       }
-  
-      const deviceTokens = await User.find({ ...query }, { _id: 0, deviceToken: 1 });
+
+      const deviceTokens = await User.find(
+        { ...query },
+        { _id: 0, deviceToken: 1 }
+      );
 
       if (deviceTokens.length) {
         await queue.announcement.add(
@@ -92,7 +106,10 @@ class AnnouncementController {
 
       return res.status(200).json(announcement);
     } catch (err) {
-      console.log("🚀 ~ file: announcement.controller.js:98 ~ AnnouncementController ~ create= ~ err:", err)
+      console.log(
+        '🚀 ~ file: announcement.controller.js:98 ~ AnnouncementController ~ create= ~ err:',
+        err
+      );
       return res.status(400).json(err);
     }
   };

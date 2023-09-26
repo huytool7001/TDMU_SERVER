@@ -17,29 +17,6 @@ class UserController {
     return res.status(200).json(user);
   };
 
-  search = async () => {
-    return User.find().lean();
-  };
-
-  findByToken = async (deviceToken) => {
-    const user = await User.findOne({ deviceToken });
-    return user;
-  };
-
-  findByUserIds = async (userIds) => {
-    const users = await User.aggregate([
-      { $match: { userId: { $in: userIds } } },
-      {
-        $group: {
-          _id: null,
-          deviceTokens: { $addToSet: '$deviceToken' },
-        },
-      },
-    ]);
-
-    return users;
-  };
-
   create = async (req, res) => {
     const { deviceToken, userId, userToken, appId } = req.body;
     if (!deviceToken || !userId || !userToken) {
@@ -52,7 +29,7 @@ class UserController {
       .send({
         token: deviceToken,
         notification: { title: 'TDMU', body: 'Hello' },
-      })
+      }, true)
       .then(async () => {
         const profile = await dkmhController.getProfile(userToken);
 
@@ -68,7 +45,7 @@ class UserController {
           examSchedule = await dkmhController.getExamSchedule(userToken, semester.hoc_ky);
         }
 
-        const existed = await this.findByToken(deviceToken);
+        const existed = await User.findOne({ deviceToken });
         if (existed) {
           existed.userId = userId;
           existed.appId = appId || '';

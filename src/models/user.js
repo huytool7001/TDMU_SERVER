@@ -28,9 +28,9 @@ const schema = new Schema(
     },
   },
   {
-    collection: 'users',
+    collection: 'user',
   }
 );
 
-const User = model('users', schema);
+const User = model('user', schema);
 export default User;
