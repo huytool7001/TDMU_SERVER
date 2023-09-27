@@ -49,7 +49,11 @@ class AnnouncementController {
       if (user) {
         query = {
           ...query,
-          $or: [{ faculties: user.faculty }, { classes: user.class }],
+          $or: [
+            { faculties: { $in: [user.faculty, 'ALL'] } },
+            { classes: { $in: [user.class, 'ALL'] } },
+          ],
+          at: { $lte: new Date().getTime() },
         };
       }
       delete query.userId;
@@ -187,13 +191,13 @@ class AnnouncementController {
   };
 
   handleAnnouncementJobQueue = async (job) => {
-    const { title, deviceTokens } = job.data;
+    const { id, title, deviceTokens } = job.data;
 
     await services.firebaseMessaging
       .sendEachForMulticast({
         tokens: deviceTokens,
         notification: {
-          title: 'TDMU',
+          title: 'Thông báo',
           body: title,
         },
       })
