@@ -2,13 +2,14 @@ import userController from './user.controller.js';
 import queue from '../utils/queue.js';
 import services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
+import User from '../models/user.js';
 
 class NotificationController {
   constructor() {}
 
   notifyAllStudentSchedule = async () => {
-    const date = new Date('2023-09-28T00:00:00.000+00:00');
-    const students = await userController.search();
+    const date = new Date();
+    const students = await User.find();
     for await (let student of students) {
       student.schedule.forEach((subject) => {
         if (
