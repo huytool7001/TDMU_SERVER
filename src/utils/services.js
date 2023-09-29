@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import serviceAccount from '../../firebase-admin-sdk.json' assert { type: 'json' };
+import { FIREBASE_DB_URL } from '../configs/constant.js';
 
 class Services {
   constructor() {
@@ -10,8 +11,7 @@ class Services {
   load = () => {
     this.firebaseAdmin = admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL:
-        'https://tdmu-386502-default-rtdb.asia-southeast1.firebasedatabase.app',
+      databaseURL: FIREBASE_DB_URL,
     });
 
     this.firebaseMessaging = this.firebaseAdmin.messaging();
