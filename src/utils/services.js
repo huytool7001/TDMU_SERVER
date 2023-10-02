@@ -1,5 +1,5 @@
 import admin from 'firebase-admin';
-import serviceAccount from '../etc/secrets/firebase-admin-sdk.json' assert { type: 'json' };
+import serviceAccount from '/etc/secrets/firebase-admin-sdk.json' assert { type: 'json' };
 import { FIREBASE_DB_URL } from '../configs/constant.js';
 
 class Services {
