@@ -1,6 +1,7 @@
 import Bull from 'bull';
 import notificationController from '../controllers/notification.controller.js';
 import announcementController from '../controllers/announcement.controller.js';
+import { REDIS_HOST, REDIS_PASSWORD, REDIS_PORT } from '../configs/constant.js';
 
 class Queue {
   constructor() {
@@ -12,7 +13,9 @@ class Queue {
   }
 
   load = () => {
-    const redisConnection = 'redis://127.0.0.1:6379';
+    const redisConnection = {
+      redis: { port: REDIS_PORT, host: REDIS_HOST, password: REDIS_PASSWORD },
+    };
 
     this.completed = new Bull('completed', redisConnection);
     this.completed.process(this.removeJob);
