@@ -1,6 +1,9 @@
 import admin from 'firebase-admin';
-import serviceAccount from '/etc/secrets/firebase-admin-sdk.json' assert { type: 'json' };
 import { FIREBASE_DB_URL } from '../configs/constant.js';
+import { decryptToString } from './secure-file.js';
+const secureFileName = './firebase-admin-sdk.json.secure';
+const jsonStr = await decryptToString(secureFileName);
+const serviceAccount = JSON.parse(jsonStr);
 
 class Services {
   constructor() {
