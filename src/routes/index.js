@@ -3,11 +3,13 @@ import userRouter from './user.js';
 import notificationRouter from './notification.js';
 import announcementRouter from './announcement.js';
 import adminRouter from './admin.js';
+import scheduleNoteRouter from './schedule-note.js';
 
 const app = express();
 app.use('/users', userRouter);
 app.use('/notifications', notificationRouter);
 app.use('/announcements', announcementRouter);
 app.use('/admins', adminRouter);
+app.use('/schedule-notes', scheduleNoteRouter);
 
 export default app;
