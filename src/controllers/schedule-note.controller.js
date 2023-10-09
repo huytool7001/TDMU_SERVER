@@ -47,10 +47,20 @@ class ScheduleNoteController {
         });
       }
 
-      const scheduleNote = await ScheduleNote.create({
-        ...req.body,
-        id: Date.now(),
-      });
+      let scheduleNote = null;
+      const existed = await ScheduleNote.findOne({ userId, scheduleId });
+
+      if (existed) {
+        scheduleNote = await ScheduleNote.findOneAndUpdate(
+          { userId, scheduleId },
+          req.body
+        );
+      } else {
+        scheduleNote = await ScheduleNote.create({
+          ...req.body,
+          id: Date.now(),
+        });
+      }
 
       return res.status(200).json(scheduleNote);
     } catch (err) {
@@ -85,8 +95,8 @@ class ScheduleNoteController {
   };
 
   delete = async (req, res) => {
-    const { id } = req.params;
-    const scheduleNote = await ScheduleNote.findOneAndDelete({ id });
+    const { userId, scheduleId } = req.params;
+    const scheduleNote = await ScheduleNote.findOneAndDelete({ userId, scheduleId });
 
     if (!scheduleNote) {
       return res.status(400).json({ error: 'ScheduleNote not found' });
