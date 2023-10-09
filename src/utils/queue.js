@@ -10,6 +10,7 @@ class Queue {
     this.schedule = null;
     this.examSchedule = null;
     this.scheduleUpdate = null;
+    this.noteSchedule = null;
   }
 
   load = () => {
@@ -35,10 +36,14 @@ class Queue {
     this.scheduleUpdate = new Bull('scheduleUpdate', redisConnection);
     this.scheduleUpdate.process(notificationController.handleScheduleUpdateNotificationJobQueue);
 
+    this.noteSchedule = new Bull('noteSchedule', redisConnection);
+    this.noteSchedule.process(notificationController.handleScheduleNoteNotificationJobQueue);
+
     this.setUpListeners('schedule');
     this.setUpListeners('examSchedule');
     this.setUpListeners('announcement');
     this.setUpListeners('scheduleUpdate');
+    this.setUpListeners('noteSchedule');
   };
 
   setUpListeners = async (queue) => {

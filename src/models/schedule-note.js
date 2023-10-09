@@ -21,6 +21,8 @@ const schema = new Schema(
     color: String,
     notified: Boolean,
     timer: Number,
+    date: Date,
+    startTime: String,
   },
   {
     collection: 'scheduleNote',

@@ -122,7 +122,7 @@ class DKMHController {
           parseInt(startTime[0], 10) * 3600000 +
           parseInt(startTime[1], 10) * 60000;
 
-        const delay = mon.ngay_hoc.getTime() + startTime - date.getTime();
+        const delay = mon.ngay_hoc.getTime() + startTime;
 
         let ma_phong = mon.ma_phong.split('-');
         if (ma_phong.length === 4) {
@@ -224,7 +224,7 @@ class DKMHController {
           parseInt(startTime[0], 10) * 3600000 +
           parseInt(startTime[1], 10) * 60000;
 
-        const delay = mon.ngay_thi.getTime() + startTime - date.getTime();
+        const delay = mon.ngay_thi.getTime() + startTime;
 
         if (delay > 0) {
           data.push({
