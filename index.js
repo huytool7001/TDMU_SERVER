@@ -19,8 +19,8 @@ const load = async () => {
   app.use('/v1', router);
 
   await Database.load();
-  await   Services.load();
-  await   Queue.load();
+  await Services.load();
+  await Queue.load();
   await Schedule.load();
   const server = http.createServer(app);
 
