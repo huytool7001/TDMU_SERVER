@@ -139,14 +139,14 @@ class AnnouncementController {
 
     const job = await queue.announcement.getJob(id);
     if (job) {
-      job.remove();
+      await job.remove();
 
       const deviceTokens = await User.find(
         { userId: { $in: announcement.to } },
         { _id: 0, deviceToken: 1 }
       );
 
-      queue.announcement.add(
+      await queue.announcement.add(
         {
           id: announcement.id,
           title: announcement.title,
@@ -165,7 +165,7 @@ class AnnouncementController {
 
     const job = await queue.announcement.getJob(id);
     if (job) {
-      job.remove();
+      await job.remove();
     }
 
     return res.status(200).json(announcement);

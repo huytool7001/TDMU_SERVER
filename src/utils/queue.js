@@ -15,7 +15,12 @@ class Queue {
 
   load = () => {
     const redisConnection = {
-      redis: { port: REDIS_PORT, host: REDIS_HOST, password: REDIS_PASSWORD },
+      redis: {
+        port: REDIS_PORT,
+        host: REDIS_HOST,
+        password: REDIS_PASSWORD,
+        tls: {},
+      },
     };
 
     this.completed = new Bull('completed', redisConnection);
@@ -25,19 +30,29 @@ class Queue {
     this.failed.process(this.removeJob);
 
     this.schedule = new Bull('schedule', redisConnection);
-    this.schedule.process(notificationController.handleScheduleNotificationJobQueue);
+    this.schedule.process(
+      notificationController.handleScheduleNotificationJobQueue
+    );
 
     this.examSchedule = new Bull('examSchedule', redisConnection);
-    this.examSchedule.process(notificationController.handleExamScheduleNotificationJobQueue);
+    this.examSchedule.process(
+      notificationController.handleExamScheduleNotificationJobQueue
+    );
 
     this.announcement = new Bull('announcement', redisConnection);
-    this.announcement.process(announcementController.handleAnnouncementJobQueue);
+    this.announcement.process(
+      announcementController.handleAnnouncementJobQueue
+    );
 
     this.scheduleUpdate = new Bull('scheduleUpdate', redisConnection);
-    this.scheduleUpdate.process(notificationController.handleScheduleUpdateNotificationJobQueue);
+    this.scheduleUpdate.process(
+      notificationController.handleScheduleUpdateNotificationJobQueue
+    );
 
     this.noteSchedule = new Bull('noteSchedule', redisConnection);
-    this.noteSchedule.process(notificationController.handleScheduleNoteNotificationJobQueue);
+    this.noteSchedule.process(
+      notificationController.handleScheduleNoteNotificationJobQueue
+    );
 
     this.setUpListeners('schedule');
     this.setUpListeners('examSchedule');
@@ -59,6 +74,10 @@ class Queue {
         { id: job?.id, queue },
         { delay: 1000 * 10 * 60, removeOnComplete: true }
       );
+    });
+
+    this[queue].on('error', (error) => {
+      console.log(error);
     });
   };
 
