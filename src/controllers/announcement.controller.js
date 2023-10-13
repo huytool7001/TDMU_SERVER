@@ -4,6 +4,7 @@ import services from '../utils/services.js';
 import User from '../models/user.js';
 import queue from '../utils/queue.js';
 import { ANNOUNCEMENT_STATUS } from '../configs/constant.js';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 class AnnouncementController {
   constructor() {}
@@ -22,11 +23,6 @@ class AnnouncementController {
 
   search = async (req, res) => {
     let { query } = req;
-    console.log(
-      '🚀 ~ file: announcement.controller.js:22 ~ AnnouncementController ~ search= ~ query:',
-      query
-    );
-
     const limit = query && query.limit ? parseInt(query.limit) : 0;
     const skip = query && query.skip ? parseInt(query.skip) : 0;
     const sort = query && query.sort ? JSON.parse(query.sort) : { id: 1 };
@@ -78,9 +74,32 @@ class AnnouncementController {
         });
       }
 
+      const files = [];
+      for await (let file of req.files) {
+        file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+          'utf8'
+        );
+        const storageRef = ref(
+          services.firebaseStorage,
+          `${file.originalname + '_' + Date.now()}`
+        );
+        const snapshot = await uploadBytes(
+          storageRef,
+          file.buffer,
+          file.mimetype
+        );
+
+        const path = await getDownloadURL(snapshot.ref);
+        files.push({
+          name: file.originalname,
+          path,
+        });
+      }
+
       const announcement = await Announcement.create({
         ...req.body,
         id: Date.now(),
+        files,
       });
 
       const query = {};
@@ -110,10 +129,6 @@ class AnnouncementController {
 
       return res.status(200).json(announcement);
     } catch (err) {
-      console.log(
-        '🚀 ~ file: announcement.controller.js:98 ~ AnnouncementController ~ create= ~ err:',
-        err
-      );
       return res.status(400).json(err);
     }
   };
@@ -122,16 +137,44 @@ class AnnouncementController {
     const { id } = req.params;
     console.log(req.body);
 
-    const { title, body, from, at } = req.body;
+    const { title, body, from, at, curFiles } = req.body;
     if (!title || !body || !from || !at) {
       return res.status(400).json({
         error: 'Please fill in all fields',
       });
     }
 
-    const announcement = await Announcement.findOneAndUpdate({ id }, req.body, {
-      new: true,
-    });
+    const files = [];
+    curFiles?.forEach((curFile) => files.push(JSON.parse(curFile)));
+
+    for await (let file of req.files) {
+      file.originalname = Buffer.from(file.originalname, 'latin1').toString(
+        'utf8'
+      );
+      const storageRef = ref(
+        services.firebaseStorage,
+        `${Date.now() + '_' + file.originalname}`
+      );
+      const snapshot = await uploadBytes(
+        storageRef,
+        file.buffer,
+        file.mimetype
+      );
+
+      const path = await getDownloadURL(snapshot.ref);
+      files.push({
+        name: file.originalname,
+        path,
+      });
+    }
+
+    const announcement = await Announcement.findOneAndUpdate(
+      { id },
+      { ...req.body, files },
+      {
+        new: true,
+      }
+    );
 
     if (!announcement) {
       return res.status(400).json({ error: 'Announcement not found' });
@@ -173,10 +216,6 @@ class AnnouncementController {
 
   deleteMany = async (req, res) => {
     let { ids } = req.query;
-    console.log(
-      '🚀 ~ file: announcement.controller.js:130 ~ AnnouncementController ~ deleteMany ~ ids:',
-      ids
-    );
     ids = ids.split(',') || [];
     const announcements = await Announcement.deleteMany({ id: { $in: ids } });
 

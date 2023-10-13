@@ -43,6 +43,7 @@ const schema = new Schema(
       type: Boolean,
       default: true,
     },
+    files: Mixed,
   },
   {
     collection: 'announcement',

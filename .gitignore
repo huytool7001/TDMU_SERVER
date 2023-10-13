@@ -4,6 +4,7 @@ yarn.lock
 yarn-error.log
 package-lock.json
 firebase-admin-sdk.json
+firebase-config.json
 # OSX
 #
 .DS_Store
