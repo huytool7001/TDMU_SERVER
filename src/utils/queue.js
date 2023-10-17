@@ -20,6 +20,7 @@ class Queue {
         host: REDIS_HOST,
         password: REDIS_PASSWORD,
         tls: {},
+        keepAlive : 10000
       },
     };
 
