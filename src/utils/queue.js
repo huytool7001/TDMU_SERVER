@@ -20,7 +20,7 @@ class Queue {
         host: REDIS_HOST,
         password: REDIS_PASSWORD,
         tls: {},
-        keepAlive : 10000
+        // keepAlive: 10000,
       },
     };
 
@@ -78,7 +78,7 @@ class Queue {
     });
 
     this[queue].on('error', (error) => {
-      console.log(error);
+      throw error;
     });
   };
 
