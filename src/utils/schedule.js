@@ -5,8 +5,10 @@ class Schedule {
   constructor() {}
 
   load = () => {
-    scheduleJob('schedule', '0 19 16 * * *', () =>
-      notificationController.notifyAllStudentSchedule()
+    scheduleJob(
+      'schedule',
+      { hour: 16, minute: 28, second: 0, tz: 'Asia/Ho_Chi_Minh' },
+      () => notificationController.notifyAllStudentSchedule()
     );
 
     scheduleJob('article', '59 59 23 * * *', () =>
