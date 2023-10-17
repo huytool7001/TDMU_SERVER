@@ -11,6 +11,7 @@ class NotificationController {
   notifyAllStudentSchedule = async () => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
+    console.log(date.toDateString());
     const students = await User.find();
     for await (let student of students) {
       student.schedule.forEach((subject) => {
@@ -18,6 +19,8 @@ class NotificationController {
           date.toDateString() === subject.ngay_hoc.toDateString() &&
           subject.delay > 0
         ) {
+          console.log(subject.ngay_hoc)
+
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
             { delay: subject.delay - student.timer.schedule - date.getTime() }
