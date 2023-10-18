@@ -8,7 +8,7 @@ import ScheduleNote from '../models/schedule-note.js';
 class NotificationController {
   constructor() {}
 
-  notifyAllStudentSchedule = async () => {
+  notifyAllStudentSchedule = async (req, res) => {
     const date = new Date();
     date.setHours(0, 0, 0, 0);
 
@@ -85,6 +85,10 @@ class NotificationController {
         { delay: note.date.getTime() + startTime - date.getTime() }
       );
     });
+
+    if (res) {
+      return res.status(200).json({ success: true });
+    }
   };
 
   handleScheduleNotificationJobQueue = async (job) => {
