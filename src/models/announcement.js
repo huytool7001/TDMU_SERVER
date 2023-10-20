@@ -44,6 +44,7 @@ const schema = new Schema(
       default: true,
     },
     files: Mixed,
+    replies: Mixed,
   },
   {
     collection: 'announcement',

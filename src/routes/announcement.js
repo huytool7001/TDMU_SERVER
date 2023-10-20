@@ -10,6 +10,7 @@ router.route('/').get(announcementController.search);
 router.route('/:id').get(announcementController.get);
 
 router.route('/').post(upload.array('files'), announcementController.create);
+router.route('/:id/replies').post(announcementController.studentReply);
 
 router.route('/:id').put(upload.array('files'), announcementController.update);
 

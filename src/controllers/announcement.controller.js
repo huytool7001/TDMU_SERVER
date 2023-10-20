@@ -249,6 +249,67 @@ class AnnouncementController {
       { status: ANNOUNCEMENT_STATUS.SENT }
     );
   };
+
+  studentReply = async (req, res) => {
+    const { id } = req.params;
+    const { studentId } = req.body;
+    const announcement = await Announcement.findOneAndUpdate(
+      {
+        id,
+      },
+      [
+        {
+          $set: {
+            replies: {
+              $cond: [
+                {
+                  $in: [
+                    studentId,
+                    {
+                      $ifNull: ['$replies.studentId', []],
+                    },
+                  ],
+                },
+                {
+                  $map: {
+                    input: '$replies',
+                    in: {
+                      $mergeObjects: [
+                        '$$this',
+                        {
+                          $cond: [
+                            {
+                              $eq: ['$$this.studentId', studentId],
+                            },
+                            req.body,
+                            {},
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+                {
+                  $concatArrays: [
+                    {
+                      $ifNull: ['$replies', []],
+                    },
+                    [req.body],
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ],
+      {
+        upsert: true,
+        new: true,
+      }
+    );
+
+    return res.status(200).json(announcement);
+  };
 }
 
 const announcementController = new AnnouncementController();
