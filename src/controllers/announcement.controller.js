@@ -67,7 +67,7 @@ class AnnouncementController {
 
   create = async (req, res) => {
     try {
-      const { title, body, from, at, faculties, classes } = req.body;
+      let { title, body, from, at, faculties, classes, students } = req.body;
       if (!title || !body || !from || !at) {
         return res.status(400).json({
           error: 'Please fill in all fields',
@@ -103,6 +103,11 @@ class AnnouncementController {
       });
 
       const query = {};
+      const coursesOfFaculties =
+        faculties?.length &&
+        faculties.filter((faculty) => faculty.includes('('));
+
+      faculties = faculties.filter((faculty) => !faculty.includes('('));
       if (faculties?.length && !faculties.includes('ALL')) {
         query.faculty = { $in: faculties };
       }
@@ -111,8 +116,29 @@ class AnnouncementController {
         query.class = { $in: classes };
       }
 
+      if (students?.length) {
+        query.userId = { $in: students };
+      }
+
+      const courseQuery = [];
+
+      coursesOfFaculties.forEach((course) => {
+        const part = course.split(' (');
+        courseQuery.push({
+          $and: [
+            { faculty: part[0] },
+            {
+              class: {
+                $regex: `${part[1].substring(0, 3)}.*`,
+                $options: 'i',
+              },
+            },
+          ],
+        });
+      });
+
       const deviceTokens = await User.find(
-        { ...query },
+        { $or: [...courseQuery, query] },
         { _id: 0, deviceToken: 1 }
       );
 
@@ -129,6 +155,7 @@ class AnnouncementController {
 
       return res.status(200).json(announcement);
     } catch (err) {
+      console.log(err);
       return res.status(400).json(err);
     }
   };
@@ -183,12 +210,51 @@ class AnnouncementController {
     const job = await queue.announcement.getJob(id);
     if (job) {
       await job.remove();
+    }
 
-      const deviceTokens = await User.find(
-        { userId: { $in: announcement.to } },
-        { _id: 0, deviceToken: 1 }
-      );
+    const query = {};
+    const coursesOfFaculties =
+      announcement.faculties?.length &&
+      announcement.faculties.filter((faculty) => faculty.includes('('));
 
+    const faculties = announcement.faculties.filter(
+      (faculty) => !faculty.includes('(')
+    );
+    if (faculties?.length && !faculties.includes('ALL')) {
+      query.faculty = { $in: faculties };
+    }
+
+    if (announcement.classes?.length && !announcement.classes.includes('ALL')) {
+      query.class = { $in: announcement.classes };
+    }
+
+    if (announcement.students?.length) {
+      query.userId = { $in: announcement.students };
+    }
+
+    const courseQuery = [];
+
+    coursesOfFaculties.forEach((course) => {
+      const part = course.split(' (');
+      courseQuery.push({
+        $and: [
+          { faculty: part[0] },
+          {
+            class: {
+              $regex: `${part[1].substring(0, 3)}.*`,
+              $options: 'i',
+            },
+          },
+        ],
+      });
+    });
+
+    const deviceTokens = await User.find(
+      { $or: [...courseQuery, query] },
+      { _id: 0, deviceToken: 1 }
+    );
+
+    if (deviceTokens.length) {
       await queue.announcement.add(
         {
           id: announcement.id,

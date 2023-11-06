@@ -30,6 +30,10 @@ const schema = new Schema(
       type: Mixed,
       default: [],
     },
+    students: {
+      type: Mixed,
+      default: [],
+    },
     at: {
       type: Number,
       required: true,
