@@ -16,6 +16,7 @@ class Services {
   constructor() {
     this.firebaseMessaging = null;
     this.firebaseStorage = null;
+    this.firebaseAuth = null;
   }
 
   load = () => {
@@ -24,6 +25,7 @@ class Services {
       databaseURL: FIREBASE_DB_URL,
     });
     this.firebaseMessaging = firebaseAdmin.messaging();
+    this.firebaseAuth = firebaseAdmin.auth();
 
     const app = initializeApp(firebaseConfig);
     this.firebaseStorage = getStorage(app);
