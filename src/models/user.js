@@ -11,6 +11,7 @@ const schema = new Schema(
       unique: true,
     },
     userId: String,
+    email: String,
     faculty: String,
     class: String,
     appId: String,

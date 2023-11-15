@@ -18,18 +18,21 @@ class UserController {
   };
 
   create = async (req, res) => {
-    const { deviceToken, userId, userToken, appId } = req.body;
-    if (!deviceToken || !userId || !userToken) {
+    const { deviceToken, userId, userToken, appId, email } = req.body;
+    if (!deviceToken || !userId || !userToken || !email) {
       return res
         .status(400)
-        .json({ message: 'deviceToken, userId and userToken is required' });
+        .json({ message: 'deviceToken, userId, userToken, email is required' });
     }
 
     return Services.firebaseMessaging
-      .send({
-        token: deviceToken,
-        notification: { title: 'TDMU', body: 'Hello' },
-      }, true)
+      .send(
+        {
+          token: deviceToken,
+          notification: { title: 'TDMU', body: 'Hello' },
+        },
+        true
+      )
       .then(async () => {
         const profile = await dkmhController.getProfile(userToken);
 
@@ -42,25 +45,35 @@ class UserController {
             semester.hoc_ky
           );
 
-          examSchedule = await dkmhController.getExamSchedule(userToken, semester.hoc_ky);
+          examSchedule = await dkmhController.getExamSchedule(
+            userToken,
+            semester.hoc_ky
+          );
         }
 
         const existed = await User.findOne({ deviceToken });
         if (existed) {
-          existed.userId = userId;
-          existed.appId = appId || '';
-          existed.schedule = schedule;
-          existed.examSchedule = examSchedule;
-          existed.class = profile.lop || '';
-          existed.faculty = profile.khoa || '';
+          try {
+            existed.userId = userId;
+            existed.appId = appId || '';
+            existed.email = email || '';
+            existed.schedule = schedule;
+            existed.examSchedule = examSchedule;
+            existed.class = profile?.lop || '';
+            existed.faculty = profile?.khoa || '';
 
-          await existed.save();
+            await existed.save();
+          } catch (err) {
+            console.log(err);
+          }
+
           return res.status(200).json(existed);
         } else {
           const user = await User.create({
             _id: new ObjectId(),
             deviceToken,
             userId,
+            email,
             appId: appId || '',
             schedule,
             examSchedule,
@@ -88,7 +101,7 @@ class UserController {
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
     }
-    
+
     return res.status(200).json(user);
   };
 

@@ -189,6 +189,41 @@ class NotificationController {
         console.log(err);
       });
   };
+
+  notifyChatMessage = async (req, res) => {
+    const { channelId, text, userEmail, username } = req.body;
+    console.log(
+      '🚀 ~ file: notification.controller.js:195 ~ NotificationController ~ notifyChatMessage= ~ channelId, text, userEmail, username:',
+      channelId,
+      text,
+      userEmail,
+      username
+    );
+    const group = await services.firebaseFirestore
+      .collection('GROUPS')
+      .doc(channelId)
+      .get();
+
+    const members = group
+      .data()
+      .members.filter((member) => member !== userEmail);
+
+    const users = await User.find({ email: { $in: members } }, 'deviceToken');
+
+    await services.firebaseMessaging
+      .sendEachForMulticast({
+        tokens: users.map((user) => user.deviceToken),
+        notification: {
+          title: group.data().name,
+          body: `${username}: ${text}`,
+        },
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    return res.status(200).json({ message: 'Send notification successfully' });
+  };
 }
 
 const notificationController = new NotificationController();
