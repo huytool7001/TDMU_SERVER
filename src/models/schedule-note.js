@@ -13,24 +13,19 @@ const schema = new Schema(
       type: String,
       required: true,
     },
-    scheduleId: {
-      type: String,
-      required: true,
-    },
-    note: String,
+    title: String,
+    summary: String,
     color: String,
     notified: Boolean,
     timer: Number,
-    date: Date,
-    startTime: String,
+    start: Number,
+    end: Number,
   },
   {
     collection: 'scheduleNote',
     timestamps: true,
   }
 );
-
-schema.index({ userId: 1, scheduleId: 1 }, { unique: true });
 
 const ScheduleNote = model('scheduleNote', schema);
 export default ScheduleNote;

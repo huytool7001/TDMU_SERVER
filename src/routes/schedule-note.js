@@ -1,15 +1,15 @@
 import { Router } from 'express';
-import announcementController from '../controllers/schedule-note.controller.js';
+import scheduleNoteController from '../controllers/schedule-note.controller.js';
 
 const router = Router();
 
-router.route('/').get(announcementController.search);
-router.route('/:id').get(announcementController.get);
+router.route('/').get(scheduleNoteController.search);
+router.route('/:id').get(scheduleNoteController.get);
 
-router.route('/').post(announcementController.create);
+router.route('/').post(scheduleNoteController.create);
 
-router.route('/:id').put(announcementController.update);
+router.route('/:id').put(scheduleNoteController.update);
 
-router.route('/:userId/:scheduleId').delete(announcementController.delete);
+router.route('/:id').delete(scheduleNoteController.delete);
 
 export default router;

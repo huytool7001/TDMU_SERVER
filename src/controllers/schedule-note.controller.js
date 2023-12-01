@@ -40,27 +40,10 @@ class ScheduleNoteController {
 
   create = async (req, res) => {
     try {
-      const { userId, scheduleId } = req.body;
-      if (!userId || !scheduleId) {
-        return res.status(400).json({
-          error: 'Please fill in all fields',
-        });
-      }
-
-      let scheduleNote = null;
-      const existed = await ScheduleNote.findOne({ userId, scheduleId });
-
-      if (existed) {
-        scheduleNote = await ScheduleNote.findOneAndUpdate(
-          { userId, scheduleId },
-          req.body
-        );
-      } else {
-        scheduleNote = await ScheduleNote.create({
-          ...req.body,
-          id: Date.now(),
-        });
-      }
+      const scheduleNote = await ScheduleNote.create({
+        ...req.body,
+        id: Date.now(),
+      });
 
       return res.status(200).json(scheduleNote);
     } catch (err) {
@@ -76,27 +59,20 @@ class ScheduleNoteController {
     const { id } = req.params;
     console.log(req.body);
 
-    const { userId, scheduleId } = req.body;
-    if (!userId || !scheduleId) {
-      return res.status(400).json({
-        error: 'Please fill in all fields',
-      });
-    }
-
     const scheduleNote = await ScheduleNote.findOneAndUpdate({ id }, req.body, {
       new: true,
     });
 
     if (!scheduleNote) {
-      return res.status(400).json({ error: 'ScheduleNote not found' });
+      return res.status(400).json({ error: 'Schedule note not found' });
     }
 
     return res.status(200).json(scheduleNote);
   };
 
   delete = async (req, res) => {
-    const { userId, scheduleId } = req.params;
-    const scheduleNote = await ScheduleNote.findOneAndDelete({ userId, scheduleId });
+    const { id } = req.params;
+    const scheduleNote = await ScheduleNote.findOneAndDelete({ id });
 
     if (!scheduleNote) {
       return res.status(400).json({ error: 'ScheduleNote not found' });
