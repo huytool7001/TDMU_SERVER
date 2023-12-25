@@ -25,7 +25,7 @@ class AnnouncementController {
     let { query } = req;
     const limit = query && query.limit ? parseInt(query.limit) : 0;
     const skip = query && query.skip ? parseInt(query.skip) : 0;
-    const sort = query && query.sort ? JSON.parse(query.sort) : { id: 1 };
+    const sort = query && query.sort ? JSON.parse(query.sort) : { at: 1 };
 
     delete query.limit;
     delete query.skip;
@@ -229,8 +229,13 @@ class AnnouncementController {
         });
       });
 
+      const queryString = [...courseQuery];
+      if (Object.keys(query).length !== 0) {
+        queryString.push(query);
+      }
+
       const deviceTokens = await User.find(
-        { $or: [...courseQuery, query] },
+        { $or: queryString },
         { _id: 0, deviceToken: 1 }
       );
 
@@ -257,6 +262,8 @@ class AnnouncementController {
     console.log(req.body);
 
     const { title, body, from, at, curFiles } = req.body;
+    let faculties = req.body.faculties || [];
+    let classes = req.body.classes || [];
     delete req.body.replies;
     if (!title || !body || !from || !at) {
       return res.status(400).json({
@@ -290,7 +297,7 @@ class AnnouncementController {
 
     const announcement = await Announcement.findOneAndUpdate(
       { id },
-      { ...req.body, files },
+      { ...req.body, files, faculties, classes },
       {
         new: true,
       }
@@ -310,7 +317,7 @@ class AnnouncementController {
       ? announcement.faculties.filter((faculty) => faculty.includes('('))
       : [];
 
-    const faculties = announcement.faculties?.length
+    faculties = announcement.faculties?.length
       ? announcement.faculties.filter((faculty) => !faculty.includes('('))
       : [];
 
@@ -343,8 +350,13 @@ class AnnouncementController {
       });
     });
 
+    const queryString = [...courseQuery];
+    if (Object.keys(query).length !== 0) {
+      queryString.push(query);
+    }
+
     const deviceTokens = await User.find(
-      { $or: [...courseQuery, query] },
+      { $or: queryString },
       { _id: 0, deviceToken: 1 }
     );
 
