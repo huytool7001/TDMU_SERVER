@@ -12,6 +12,7 @@ const schema = new Schema(
     },
     userId: String,
     email: String,
+    name: String,
     faculty: String,
     class: String,
     appId: String,
@@ -25,6 +26,10 @@ const schema = new Schema(
       exam: {
         type: Number,
         default: NOTIFICATION_TIMER.EXAM,
+      },
+      event: {
+        type: Number,
+        default: NOTIFICATION_TIMER.SCHEDULE,
       },
     },
   },

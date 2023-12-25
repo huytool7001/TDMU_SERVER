@@ -1,5 +1,7 @@
 import ScheduleNote from '../models/schedule-note.js';
-
+import User from '../models/user.js';
+import queue from '../utils/queue.js';
+import { MS_DIFF } from '../configs/constant.js';
 class ScheduleNoteController {
   constructor() {}
 
@@ -45,6 +47,21 @@ class ScheduleNoteController {
         id: Date.now(),
       });
 
+      const user = await User.findOne({ userId: scheduleNote.userId });
+      if (user) {
+        queue.noteSchedule.add(
+          { title: scheduleNote.title, deviceToken: user.deviceToken },
+          {
+            jobId: scheduleNote.id,
+            delay:
+              scheduleNote.start -
+              new Date().getTime() -
+              MS_DIFF -
+              user.timer.event,
+          }
+        );
+      }
+
       return res.status(200).json(scheduleNote);
     } catch (err) {
       console.log(
@@ -67,6 +84,25 @@ class ScheduleNoteController {
       return res.status(400).json({ error: 'Schedule note not found' });
     }
 
+    const user = await User.findOne({ userId: scheduleNote.userId });
+    if (user) {
+      const job = await queue.noteSchedule.getJob(id);
+      if (job) {
+        await job.remove();
+      }
+      queue.noteSchedule.add(
+        { title: scheduleNote.title, deviceToken: user.deviceToken },
+        {
+          jobId: scheduleNote.id,
+          delay:
+            scheduleNote.start -
+            new Date().getTime() -
+            MS_DIFF -
+            user.timer.event,
+        }
+      );
+    }
+
     return res.status(200).json(scheduleNote);
   };
 
@@ -76,6 +112,11 @@ class ScheduleNoteController {
 
     if (!scheduleNote) {
       return res.status(400).json({ error: 'ScheduleNote not found' });
+    }
+
+    const job = await queue.noteSchedule.getJob(id);
+    if (job) {
+      await job.remove();
     }
 
     return res.status(200).json(scheduleNote);

@@ -2,6 +2,9 @@ import mongoose from 'mongoose';
 import User from '../models/user.js';
 import Services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
+import { MS_DIFF, TEST_SCHEDULE, TEST_USER_ID } from '../configs/constant.js';
+import ScheduleNote from '../models/schedule-note.js';
+import queue from '../utils/queue.js';
 
 const { ObjectId } = mongoose.Types;
 
@@ -18,7 +21,7 @@ class UserController {
   };
 
   create = async (req, res) => {
-    const { deviceToken, userId, userToken, appId, email } = req.body;
+    const { deviceToken, userId, userToken, appId, email, name } = req.body;
     if (!deviceToken || !userId || !userToken || !email) {
       return res
         .status(400)
@@ -57,6 +60,19 @@ class UserController {
             existed.userId = userId;
             existed.appId = appId || '';
             existed.email = email || '';
+            existed.name = name || '';
+            if (userId === TEST_USER_ID) {
+              const testSchedule = TEST_SCHEDULE;
+              const date = new Date();
+              date.setHours(0, 0, 0, 0);
+              let startTime = testSchedule.time.split(':');
+              startTime =
+                parseInt(startTime[0], 10) * 3600000 +
+                parseInt(startTime[1], 10) * 60000;
+
+              testSchedule.delay = date.getTime() + startTime;
+              schedule.push(testSchedule);
+            }
             existed.schedule = schedule;
             existed.examSchedule = examSchedule;
             existed.class = profile?.lop || '';
@@ -74,6 +90,7 @@ class UserController {
             deviceToken,
             userId,
             email,
+            name,
             appId: appId || '',
             schedule,
             examSchedule,
@@ -95,11 +112,76 @@ class UserController {
 
   update = async (req, res) => {
     const { deviceToken } = req.params;
-    console.log(req.body);
     const user = await User.findOneAndUpdate({ deviceToken }, req.body);
 
     if (!user) {
       return res.status(400).json({ message: 'User not found' });
+    }
+
+    if (
+      req.body.timer?.event !== null &&
+      req.body.timer?.event !== undefined &&
+      req.body.timer?.event !== NaN &&
+      req.body.timer?.event !== user.timer.event
+    ) {
+      const notes = await ScheduleNote.find({ userId: user.userId });
+      notes.forEach(async (note) => {
+        const job = await queue.noteSchedule.getJob(note.id);
+        if (job) {
+          await job.remove();
+        }
+
+        const delay =
+          note.start - new Date().getTime() - MS_DIFF - req.body.timer.event;
+
+        if (delay > 0) {
+          queue.noteSchedule.add(
+            { title: note.title, deviceToken: user.deviceToken },
+            {
+              jobId: note.id,
+              delay,
+              removeOnComplete: true,
+              removeOnFail: true,
+            }
+          );
+        }
+      });
+    }
+
+    if (
+      req.body.timer?.schedule !== null &&
+      req.body.timer?.schedule !== undefined &&
+      req.body.timer?.schedule !== NaN &&
+      req.body.timer?.schedule !== user.timer.schedule
+    ) {
+      const date = new Date();
+      user.schedule.forEach(async (subject) => {
+        if (
+          date.toDateString() === subject.ngay_hoc.toDateString() &&
+          subject.delay > 0
+        ) {
+          const job = await queue.schedule.getJob(
+            `${subject.ngay_hoc}-${subject.time}`
+          );
+          if (job) {
+            await job.remove();
+          }
+
+          const delay =
+            subject.delay - req.body.timer.schedule - date.getTime();
+          if (delay > 0) {
+            queue.schedule.add(
+              { ...subject, deviceToken: user.deviceToken },
+              {
+                jobId: `${subject.ngay_hoc}-${subject.time}`,
+                delay,
+                removeOnComplete: true,
+                removeOnFail: true,
+              }
+            );
+          }
+        }
+      });
     }
 
     return res.status(200).json(user);
@@ -108,6 +190,15 @@ class UserController {
   delete = async (req, res) => {
     const { deviceToken } = req.params;
     const user = await User.findOneAndDelete({ deviceToken });
+
+    const notes = await ScheduleNote.find({ userId: user.userId });
+    notes.forEach(async (note) => {
+      const job = await queue.noteSchedule.getJob(note.id);
+      if (job) {
+        await job.remove();
+      }
+    });
+
     return res.status(200).json(user);
   };
 }

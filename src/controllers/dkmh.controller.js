@@ -124,16 +124,9 @@ class DKMHController {
 
         const delay = mon.ngay_hoc.getTime() + startTime;
 
-        let ma_phong = mon.ma_phong.split('-');
-        if (ma_phong.length === 4) {
-          ma_phong = `${ma_phong[0]}-${ma_phong[1]}`;
-        } else {
-          ma_phong = ma_phong[0];
-        }
-
         data.push({
           subject: mon.ten_mon,
-          room: ma_phong,
+          room: mon.ma_phong,
           time: gio_bat_dau,
           ngay_hoc: mon.ngay_hoc,
           delay,

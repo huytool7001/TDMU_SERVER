@@ -23,10 +23,21 @@ export const NOTIFICATION_TIMER = {
 
 export const ANNOUNCEMENT_STATUS = {
   UNSENT: '0',
-  SENT: '1'
-}
+  SENT: '1',
+};
 
 export const ADMIN_PERMISSION = {
   FULL: '0',
   ANNOUNCE: '1',
-}
+};
+
+export const TEST_SCHEDULE = {
+  subject: 'Hệ Quản trị cơ sở dữ liệu (2+0)',
+  room: 'I1-104-I1-104',
+  time: '9:00',
+  ngay_hoc: new Date(),
+};
+
+export const TEST_USER_ID = '1924801030189';
+
+export const MS_DIFF = 7 * 3600000;

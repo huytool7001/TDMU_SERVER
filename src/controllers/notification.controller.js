@@ -3,7 +3,6 @@ import queue from '../utils/queue.js';
 import services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
 import User from '../models/user.js';
-import ScheduleNote from '../models/schedule-note.js';
 
 class NotificationController {
   constructor() {}
@@ -21,7 +20,12 @@ class NotificationController {
         ) {
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
-            { delay: subject.delay - student.timer.schedule - date.getTime() }
+            {
+              delay: subject.delay - student.timer.schedule - date.getTime(),
+              jobId: `${subject.ngay_hoc}-${subject.time}`,
+              removeOnComplete: true,
+              removeOnFail: true,
+            }
           );
 
           let lastWeek = new Date(subject.ngay_hoc);
@@ -39,52 +43,34 @@ class NotificationController {
                 sameSubject.time === subject.time
             )
           ) {
-            queue.scheduleUpdate.add({
-              ...subject,
-              deviceToken: student.deviceToken,
-            });
+            queue.scheduleUpdate.add(
+              {
+                ...subject,
+                deviceToken: student.deviceToken,
+              },
+              { removeOnComplete: true, removeOnFail: true }
+            );
           }
         }
       });
 
       student.examSchedule.forEach((subject) => {
-        if (date.toDateString() === subject.ngay_thi.toDateString()) {
+        if (
+          date.toDateString() === subject.ngay_thi.toDateString() &&
+          subject.delay > 0
+        ) {
           queue.examSchedule.add(
             { ...subject, deviceToken: student.deviceToken },
-            { delay: subject.delay - student.timer.exam - date.getTime() }
+            {
+              delay: subject.delay - student.timer.exam - date.getTime(),
+              jobId: `${subject.ngay_thi}-${subject.time}`,
+              removeOnComplete: true,
+              removeOnFail: true,
+            }
           );
         }
       });
     }
-
-    const notes = await ScheduleNote.aggregate([
-      {
-        $match: { notified: true, date },
-      },
-      {
-        $lookup: {
-          from: 'user',
-          let: { userId: '$userId' },
-          pipeline: [
-            { $match: { $expr: { $eq: ['$userId', '$$userId'] } } },
-            { $project: { _id: 0, deviceToken: 1 } },
-          ],
-          as: 'user',
-        },
-      },
-      {
-        $unwind: '$user',
-      },
-    ]);
-
-    notes.forEach((note) => {
-      let startTime = note.startTime.split(':');
-      startTime = startTime[0] * 3600000 + startTime[1] * 60000;
-      queue.noteSchedule.add(
-        { title: note.note, deviceToken: note.user.deviceToken },
-        { delay: note.date.getTime() + startTime - date.getTime() }
-      );
-    });
 
     if (res) {
       return res.status(200).json({ success: true });
@@ -181,7 +167,7 @@ class NotificationController {
       .send({
         token: deviceToken,
         notification: {
-          title: 'Ghi chú',
+          title: 'Sự kiện',
           body: `${title}`,
         },
       })
@@ -210,17 +196,19 @@ class NotificationController {
 
     const users = await User.find({ email: { $in: members } }, 'deviceToken');
 
-    await services.firebaseMessaging
-      .sendEachForMulticast({
-        tokens: users.map((user) => user.deviceToken),
-        notification: {
-          title: group.data().name,
-          body: `${username}: ${text}`,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: group.data().name,
+            body: `${username}: ${text}`,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
 
     return res.status(200).json({ message: 'Send notification successfully' });
   };

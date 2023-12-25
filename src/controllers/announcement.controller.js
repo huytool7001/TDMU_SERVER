@@ -46,7 +46,15 @@ class AnnouncementController {
         query = {
           ...query,
           $or: [
-            { faculties: { $in: [user.faculty, 'ALL'] } },
+            {
+              faculties: {
+                $in: [
+                  user.faculty,
+                  'ALL',
+                  `${user.faculty} (${user.class.substring(0, 3)})`,
+                ],
+              },
+            },
             { classes: { $in: [user.class, 'ALL'] } },
           ],
           at: { $lte: new Date().getTime() },
@@ -55,10 +63,91 @@ class AnnouncementController {
       delete query.userId;
     }
 
-    const announcements = await Announcement.find(query)
-      .sort(sort)
-      .skip(skip)
-      .limit(limit);
+    let aggregate = [{ $match: query }, { $sort: sort }, { $skip: skip }];
+
+    if (limit) {
+      aggregate.push({ $limit: limit });
+    }
+
+    aggregate = [
+      ...aggregate,
+      {
+        $lookup: {
+          from: 'user',
+          let: {
+            userIds: {
+              $map: { input: '$replies', as: 'reply', in: '$$reply.studentId' },
+            },
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$userId', { $ifNull: ['$$userIds', []] }] },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                userId: 1,
+                name: 1,
+                class: 1,
+                faculty: 1,
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  userId: '$userId',
+                  name: '$name',
+                  class: '$class',
+                  faculty: '$faculty',
+                },
+              },
+            },
+            {
+              $replaceRoot: {
+                newRoot: {
+                  userId: '$_id.userId',
+                  name: '$_id.name',
+                  class: '$_id.class',
+                  faculty: '$_id.faculty',
+                },
+              },
+            },
+          ],
+          as: 'read',
+        },
+      },
+      {
+        $addFields: {
+          read: {
+            $map: {
+              input: '$read',
+              as: 'c',
+              in: {
+                userId: '$$c.userId',
+                name: '$$c.name',
+                class: '$$c.class',
+                faculty: '$$c.faculty',
+                data: {
+                  $arrayElemAt: [
+                    '$replies.data',
+                    {
+                      $indexOfArray: ['$replies.userId', '$$c.userId'],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    ];
+
+    const announcements = await Announcement.aggregate(aggregate);
+    // .sort(sort)
+    // .skip(skip)
+    // .limit(limit);
 
     const totalCount = await Announcement.count(query);
 
@@ -81,7 +170,7 @@ class AnnouncementController {
         );
         const storageRef = ref(
           services.firebaseStorage,
-          `${file.originalname + '_' + Date.now()}`
+          `${Date.now() + '_' + file.originalname}`
         );
         const snapshot = await uploadBytes(
           storageRef,
@@ -103,11 +192,14 @@ class AnnouncementController {
       });
 
       const query = {};
-      const coursesOfFaculties =
-        faculties?.length &&
-        faculties.filter((faculty) => faculty.includes('('));
+      const coursesOfFaculties = faculties?.length
+        ? faculties.filter((faculty) => faculty.includes('('))
+        : [];
 
-      faculties = faculties.filter((faculty) => !faculty.includes('('));
+      faculties = faculties?.length
+        ? faculties.filter((faculty) => !faculty.includes('('))
+        : [];
+
       if (faculties?.length && !faculties.includes('ALL')) {
         query.faculty = { $in: faculties };
       }
@@ -165,6 +257,7 @@ class AnnouncementController {
     console.log(req.body);
 
     const { title, body, from, at, curFiles } = req.body;
+    delete req.body.replies;
     if (!title || !body || !from || !at) {
       return res.status(400).json({
         error: 'Please fill in all fields',
@@ -213,13 +306,14 @@ class AnnouncementController {
     }
 
     const query = {};
-    const coursesOfFaculties =
-      announcement.faculties?.length &&
-      announcement.faculties.filter((faculty) => faculty.includes('('));
+    const coursesOfFaculties = announcement.faculties?.length
+      ? announcement.faculties.filter((faculty) => faculty.includes('('))
+      : [];
 
-    const faculties = announcement.faculties.filter(
-      (faculty) => !faculty.includes('(')
-    );
+    const faculties = announcement.faculties?.length
+      ? announcement.faculties.filter((faculty) => !faculty.includes('('))
+      : [];
+
     if (faculties?.length && !faculties.includes('ALL')) {
       query.faculty = { $in: faculties };
     }
