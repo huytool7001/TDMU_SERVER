@@ -11,14 +11,84 @@ class AnnouncementController {
 
   get = async (req, res) => {
     const { id } = req.params;
-    const announcement = await Announcement.findOne(
-      { id },
-      { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 }
-    );
-    if (!announcement) {
+    const announcement = await Announcement.aggregate([
+      { $match: { id } },
+      {
+        $lookup: {
+          from: 'user',
+          let: {
+            userIds: {
+              $map: { input: '$replies', as: 'reply', in: '$$reply.studentId' },
+            },
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $in: ['$userId', { $ifNull: ['$$userIds', []] }] },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                userId: 1,
+                name: 1,
+                class: 1,
+                faculty: 1,
+              },
+            },
+            {
+              $group: {
+                _id: {
+                  userId: '$userId',
+                  name: '$name',
+                  class: '$class',
+                  faculty: '$faculty',
+                },
+              },
+            },
+            {
+              $replaceRoot: {
+                newRoot: {
+                  userId: '$_id.userId',
+                  name: '$_id.name',
+                  class: '$_id.class',
+                  faculty: '$_id.faculty',
+                },
+              },
+            },
+          ],
+          as: 'read',
+        },
+      },
+      {
+        $addFields: {
+          read: {
+            $map: {
+              input: '$read',
+              as: 'c',
+              in: {
+                userId: '$$c.userId',
+                name: '$$c.name',
+                class: '$$c.class',
+                faculty: '$$c.faculty',
+                data: {
+                  $arrayElemAt: [
+                    '$replies.data',
+                    {
+                      $indexOfArray: ['$replies.userId', '$$c.userId'],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    ]);
+    if (!announcement.length) {
       return res.status(400).json({ error: 'Announcement not found' });
     }
-    return res.status(200).json(announcement);
+    return res.status(200).json(announcement[0]);
   };
 
   search = async (req, res) => {
@@ -479,6 +549,48 @@ class AnnouncementController {
         new: true,
       }
     );
+
+    return res.status(200).json(announcement);
+  };
+
+  reply = async (req, res) => {
+    const { id, studentId } = req.params;
+    const { from, text } = req.body;
+    const announcement = await Announcement.findOneAndUpdate(
+      {
+        id,
+        'replies.studentId': studentId,
+      },
+      {
+        $push: {
+          'replies.$.data': req.body,
+        },
+      },
+      {
+        new: true,
+      }
+    );
+
+    if (from === 'ADMIN') {
+      const deviceTokens = await User.find(
+        { userId: studentId },
+        { _id: 0, deviceToken: 1 }
+      );
+
+      if (deviceTokens.length) {
+        await services.firebaseMessaging
+          .sendEachForMulticast({
+            tokens: deviceTokens.map((item) => item.deviceToken),
+            notification: {
+              title: 'Phản hồi',
+              body: text,
+            },
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      }
+    }
 
     return res.status(200).json(announcement);
   };
