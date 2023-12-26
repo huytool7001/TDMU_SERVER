@@ -4,23 +4,28 @@ const { Mixed } = Schema.Types;
 
 const schema = new Schema(
   {
-    scheduleId: {
+    id: {
       type: String,
       required: true,
+      unique: true,
     },
     userId: {
       type: String,
       required: true,
     },
-    text: String,
+    title: String,
+    summary: String,
+    color: String,
+    notified: Boolean,
+    timer: Number,
+    start: Number,
+    end: Number,
   },
   {
-    collection: 'scheduleNote',
+    collection: 'event',
     timestamps: true,
   }
 );
 
-schema.index({ scheduleId: 1, userId: 1 }, { unique: true });
-
-const ScheduleNote = model('scheduleNote', schema);
+const ScheduleNote = model('event', schema);
 export default ScheduleNote;

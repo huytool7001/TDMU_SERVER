@@ -157,9 +157,9 @@ class NotificationController {
       });
   };
 
-  handleScheduleNoteNotificationJobQueue = async (job) => {
+  handleEventNotificationJobQueue = async (job) => {
     console.log(
-      '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleNoteNotificationJobQueue= ~ job.data:',
+      '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleEventNotificationJobQueue= ~ job.data:',
       job.data
     );
     const { title, deviceToken } = job.data;

@@ -1,14 +1,12 @@
 import ScheduleNote from '../models/schedule-note.js';
-import User from '../models/user.js';
-import queue from '../utils/queue.js';
-import { MS_DIFF } from '../configs/constant.js';
+
 class ScheduleNoteController {
   constructor() {}
 
   get = async (req, res) => {
-    const { id } = req.params;
+    const { scheduleId, userId } = req.params;
     const scheduleNote = await ScheduleNote.findOne(
-      { id },
+      { scheduleId, userId },
       { _id: 0, createdAt: 0, updatedAt: 0, __v: 0 }
     );
     if (!scheduleNote) {
@@ -40,86 +38,48 @@ class ScheduleNoteController {
     return res.status(200).json(scheduleNotes);
   };
 
-  create = async (req, res) => {
+  update = async (req, res) => {
+    const { userId, scheduleId, text } = req.body;
     try {
-      const scheduleNote = await ScheduleNote.create({
-        ...req.body,
-        id: Date.now(),
+      const scheduleNote = await ScheduleNote.findOne({
+        userId,
+        scheduleId,
       });
 
-      const user = await User.findOne({ userId: scheduleNote.userId });
-      if (user) {
-        queue.noteSchedule.add(
-          { title: scheduleNote.title, deviceToken: user.deviceToken },
-          {
-            jobId: scheduleNote.id,
-            delay:
-              scheduleNote.start -
-              new Date().getTime() -
-              MS_DIFF -
-              user.timer.event,
-          }
+      if (scheduleNote) {
+        if (text) {
+          return res.status(200).json(
+            await ScheduleNote.findOneAndUpdate(
+              {
+                userId,
+                scheduleId,
+              },
+              { text },
+              { new: true }
+            )
+          );
+        } else {
+          return res.status(200).json(
+            await ScheduleNote.findOneAndDelete({
+              userId,
+              scheduleId,
+            })
+          );
+        }
+      } else {
+        return res.status(200).json(
+          await ScheduleNote.create({
+            ...req.body,
+          })
         );
       }
-
-      return res.status(200).json(scheduleNote);
     } catch (err) {
       console.log(
-        '🚀 ~ file: scheduleNote.controller.js:98 ~ ScheduleNoteController ~ create= ~ err:',
+        '🚀 ~ file: scheduleNote.controller.js:98 ~ ScheduleNoteController ~ update= ~ err:',
         err
       );
       return res.status(400).json(err);
     }
-  };
-
-  update = async (req, res) => {
-    const { id } = req.params;
-    console.log(req.body);
-
-    const scheduleNote = await ScheduleNote.findOneAndUpdate({ id }, req.body, {
-      new: true,
-    });
-
-    if (!scheduleNote) {
-      return res.status(400).json({ error: 'Schedule note not found' });
-    }
-
-    const user = await User.findOne({ userId: scheduleNote.userId });
-    if (user) {
-      const job = await queue.noteSchedule.getJob(id);
-      if (job) {
-        await job.remove();
-      }
-      queue.noteSchedule.add(
-        { title: scheduleNote.title, deviceToken: user.deviceToken },
-        {
-          jobId: scheduleNote.id,
-          delay:
-            scheduleNote.start -
-            new Date().getTime() -
-            MS_DIFF -
-            user.timer.event,
-        }
-      );
-    }
-
-    return res.status(200).json(scheduleNote);
-  };
-
-  delete = async (req, res) => {
-    const { id } = req.params;
-    const scheduleNote = await ScheduleNote.findOneAndDelete({ id });
-
-    if (!scheduleNote) {
-      return res.status(400).json({ error: 'ScheduleNote not found' });
-    }
-
-    const job = await queue.noteSchedule.getJob(id);
-    if (job) {
-      await job.remove();
-    }
-
-    return res.status(200).json(scheduleNote);
   };
 }
 

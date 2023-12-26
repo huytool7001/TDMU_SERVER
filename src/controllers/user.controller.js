@@ -3,7 +3,7 @@ import User from '../models/user.js';
 import Services from '../utils/services.js';
 import dkmhController from './dkmh.controller.js';
 import { MS_DIFF, TEST_SCHEDULE, TEST_USER_ID } from '../configs/constant.js';
-import ScheduleNote from '../models/schedule-note.js';
+import Event from '../models/event.js';
 import queue from '../utils/queue.js';
 
 const { ObjectId } = mongoose.Types;
@@ -124,9 +124,9 @@ class UserController {
       req.body.timer?.event !== NaN &&
       req.body.timer?.event !== user.timer.event
     ) {
-      const notes = await ScheduleNote.find({ userId: user.userId });
+      const notes = await Event.find({ userId: user.userId });
       notes.forEach(async (note) => {
-        const job = await queue.noteSchedule.getJob(note.id);
+        const job = await queue.event.getJob(note.id);
         if (job) {
           await job.remove();
         }
@@ -135,7 +135,7 @@ class UserController {
           note.start - new Date().getTime() - MS_DIFF - req.body.timer.event;
 
         if (delay > 0) {
-          queue.noteSchedule.add(
+          queue.event.add(
             { title: note.title, deviceToken: user.deviceToken },
             {
               jobId: note.id,
@@ -191,9 +191,9 @@ class UserController {
     const { deviceToken } = req.params;
     const user = await User.findOneAndDelete({ deviceToken });
 
-    const notes = await ScheduleNote.find({ userId: user.userId });
+    const notes = await Event.find({ userId: user.userId });
     notes.forEach(async (note) => {
-      const job = await queue.noteSchedule.getJob(note.id);
+      const job = await queue.event.getJob(note.id);
       if (job) {
         await job.remove();
       }
