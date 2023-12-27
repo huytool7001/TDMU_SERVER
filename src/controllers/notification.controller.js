@@ -19,7 +19,7 @@ class NotificationController {
           subject.delay - student.timer.schedule - date.getTime() > 0
         ) {
           queue.schedule.add(
-            { ...subject, deviceToken: student.deviceToken },
+            { ...subject, userId: student.userId },
             {
               delay: subject.delay - student.timer.schedule - date.getTime(),
               jobId: `${subject.ngay_hoc}-${subject.time}`,
@@ -46,7 +46,7 @@ class NotificationController {
             queue.scheduleUpdate.add(
               {
                 ...subject,
-                deviceToken: student.deviceToken,
+                userId: student.userId,
               },
               { removeOnComplete: true, removeOnFail: true }
             );
@@ -82,18 +82,21 @@ class NotificationController {
       '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleNotificationJobQueue= ~ job.data:',
       job.data
     );
-    const { subject, room, time, deviceToken } = job.data;
-    await services.firebaseMessaging
-      .send({
-        token: deviceToken,
-        notification: {
-          title: 'Thời khóa biểu',
-          body: `Bạn sắp có môn học ${subject} vào lúc ${time} tại phòng ${room}`,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const { subject, room, time, userId } = job.data;
+    const users = await User.find({ userId });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: 'Thời khóa biểu',
+            body: `Bạn sắp có môn học ${subject} vào lúc ${time} tại phòng ${room}`,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   handleExamScheduleNotificationJobQueue = async (job) => {
@@ -101,18 +104,21 @@ class NotificationController {
       '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleExamScheduleNotificationJobQueue= ~ job.data:',
       job.data
     );
-    const { subject, time, deviceToken } = job.data;
-    await services.firebaseMessaging
-      .send({
-        token: deviceToken,
-        notification: {
-          title: 'Lịch thi',
-          body: `Bạn có lịch thi môn ${subject} vào lúc ${time}`,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const { subject, time, userId } = job.data;
+    const users = await User.find({ userId });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: 'Lịch thi',
+            body: `Bạn có lịch thi môn ${subject} vào lúc ${time}`,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   notifyArticle = async () => {
@@ -143,18 +149,21 @@ class NotificationController {
       '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleScheduleUpdateNotificationJobQueue= ~ job.data:',
       job.data
     );
-    const { subject, room, time, deviceToken } = job.data;
-    await services.firebaseMessaging
-      .send({
-        token: deviceToken,
-        notification: {
-          title: 'Thời khóa biểu thay đổi với tuần trước',
-          body: `Bạn có môn học ${subject} vào lúc ${time} tại phòng ${room} hôm nay`,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const { subject, room, time, userId } = job.data;
+    const users = await User.find({ userId });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: 'Thời khóa biểu thay đổi với tuần trước',
+            body: `Bạn có môn học ${subject} vào lúc ${time} tại phòng ${room} hôm nay`,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   handleEventNotificationJobQueue = async (job) => {
@@ -162,18 +171,21 @@ class NotificationController {
       '🚀 ~ file: notification.controller.js:28 ~ NotificationController ~ handleEventNotificationJobQueue= ~ job.data:',
       job.data
     );
-    const { title, deviceToken } = job.data;
-    await services.firebaseMessaging
-      .send({
-        token: deviceToken,
-        notification: {
-          title: 'Sự kiện',
-          body: `${title}`,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const { title, userId } = job.data;
+    const users = await User.find({ userId });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: 'Sự kiện',
+            body: `${title}`,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    }
   };
 
   notifyChatMessage = async (req, res) => {

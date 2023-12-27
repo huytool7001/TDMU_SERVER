@@ -161,7 +161,7 @@ class AnnouncementController {
 
       const deviceTokens = await User.find(queryString, {
         _id: 0,
-        deviceToken: 1,
+        userId: 1,
       });
 
       if (deviceTokens.length && at - new Date().getTime() > 0) {
@@ -169,7 +169,7 @@ class AnnouncementController {
           {
             id: announcement.id,
             title,
-            deviceTokens: deviceTokens.map((item) => item.deviceToken),
+            userIds: deviceTokens.map((item) => item.userId),
           },
           { jobId: announcement.id, delay: at - new Date().getTime() }
         );
@@ -288,7 +288,7 @@ class AnnouncementController {
 
     const deviceTokens = await User.find(queryString, {
       _id: 0,
-      deviceToken: 1,
+      userId: 1,
     });
 
     if (deviceTokens.length && announcement.at - new Date().getTime() > 0) {
@@ -296,7 +296,7 @@ class AnnouncementController {
         {
           id: announcement.id,
           title: announcement.title,
-          deviceTokens: deviceTokens.map((item) => item.deviceToken),
+          userIds: deviceTokens.map((item) => item.userId),
         },
         {
           jobId: announcement.id,
@@ -336,24 +336,27 @@ class AnnouncementController {
   };
 
   handleAnnouncementJobQueue = async (job) => {
-    const { id, title, deviceTokens } = job.data;
+    const { id, title, userIds } = job.data;
 
-    await services.firebaseMessaging
-      .sendEachForMulticast({
-        tokens: deviceTokens,
-        notification: {
-          title: 'Thông báo',
-          body: title,
-        },
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    const users = await User.find({ userId: { $in: userIds } });
+    if (users.length) {
+      await services.firebaseMessaging
+        .sendEachForMulticast({
+          tokens: users.map((user) => user.deviceToken),
+          notification: {
+            title: 'Thông báo',
+            body: title,
+          },
+        })
+        .catch((err) => {
+          console.log(err);
+        });
 
-    await Announcement.findOneAndUpdate(
-      { id },
-      { status: ANNOUNCEMENT_STATUS.SENT }
-    );
+      await Announcement.findOneAndUpdate(
+        { id },
+        { status: ANNOUNCEMENT_STATUS.SENT }
+      );
+    }
   };
 
   studentReply = async (req, res) => {

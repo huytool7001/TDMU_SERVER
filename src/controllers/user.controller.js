@@ -83,6 +83,10 @@ class UserController {
             console.log(err);
           }
 
+          await User.deleteMany({
+            userId,
+            deviceToken: { $ne: deviceToken },
+          });
           return res.status(200).json(existed);
         } else {
           const user = await User.create({
@@ -102,6 +106,10 @@ class UserController {
             return res.status(400).json({ message: 'Create user failed' });
           }
 
+          await User.deleteMany({
+            userId,
+            deviceToken: { $ne: deviceToken },
+          });
           return res.status(200).json(user);
         }
       })
@@ -136,7 +144,7 @@ class UserController {
 
         if (delay > 0) {
           queue.event.add(
-            { title: note.title, deviceToken: user.deviceToken },
+            { title: note.title, userId: user.userId },
             {
               jobId: note.id,
               delay,
@@ -171,7 +179,7 @@ class UserController {
             subject.delay - req.body.timer.schedule - date.getTime();
           if (delay > 0) {
             queue.schedule.add(
-              { ...subject, deviceToken: user.deviceToken },
+              { ...subject, userId: user.userId },
               {
                 jobId: `${subject.ngay_hoc}-${subject.time}`,
                 delay,

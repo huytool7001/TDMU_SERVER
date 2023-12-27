@@ -51,7 +51,7 @@ class EventController {
           0
         ) {
           queue.event.add(
-            { title: event.title, deviceToken: user.deviceToken },
+            { title: event.title, userId: user.userId },
             {
               jobId: event.id,
               delay:
@@ -94,7 +94,7 @@ class EventController {
           0
         ) {
           queue.event.add(
-            { title: event.title, deviceToken: user.deviceToken },
+            { title: event.title, userId: user.userId },
             {
               jobId: event.id,
               delay:
