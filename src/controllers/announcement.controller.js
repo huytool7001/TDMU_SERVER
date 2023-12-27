@@ -36,26 +36,6 @@ class AnnouncementController {
                 faculty: 1,
               },
             },
-            {
-              $group: {
-                _id: {
-                  userId: '$userId',
-                  name: '$name',
-                  class: '$class',
-                  faculty: '$faculty',
-                },
-              },
-            },
-            {
-              $replaceRoot: {
-                newRoot: {
-                  userId: '$_id.userId',
-                  name: '$_id.name',
-                  class: '$_id.class',
-                  faculty: '$_id.faculty',
-                },
-              },
-            },
           ],
           as: 'read',
         },
@@ -65,20 +45,18 @@ class AnnouncementController {
           read: {
             $map: {
               input: '$read',
-              as: 'c',
               in: {
-                userId: '$$c.userId',
-                name: '$$c.name',
-                class: '$$c.class',
-                faculty: '$$c.faculty',
-                data: {
-                  $arrayElemAt: [
-                    '$replies.data',
-                    {
-                      $indexOfArray: ['$replies.userId', '$$c.userId'],
-                    },
-                  ],
-                },
+                $mergeObjects: [
+                  '$$this',
+                  {
+                    $arrayElemAt: [
+                      '$replies',
+                      {
+                        $indexOfArray: ['$replies.studentId', '$$this.userId'],
+                      },
+                    ],
+                  },
+                ],
               },
             },
           },
@@ -164,26 +142,6 @@ class AnnouncementController {
                 faculty: 1,
               },
             },
-            {
-              $group: {
-                _id: {
-                  userId: '$userId',
-                  name: '$name',
-                  class: '$class',
-                  faculty: '$faculty',
-                },
-              },
-            },
-            {
-              $replaceRoot: {
-                newRoot: {
-                  userId: '$_id.userId',
-                  name: '$_id.name',
-                  class: '$_id.class',
-                  faculty: '$_id.faculty',
-                },
-              },
-            },
           ],
           as: 'read',
         },
@@ -193,20 +151,18 @@ class AnnouncementController {
           read: {
             $map: {
               input: '$read',
-              as: 'c',
               in: {
-                userId: '$$c.userId',
-                name: '$$c.name',
-                class: '$$c.class',
-                faculty: '$$c.faculty',
-                data: {
-                  $arrayElemAt: [
-                    '$replies.data',
-                    {
-                      $indexOfArray: ['$replies.userId', '$$c.userId'],
-                    },
-                  ],
-                },
+                $mergeObjects: [
+                  '$$this',
+                  {
+                    $arrayElemAt: [
+                      '$replies',
+                      {
+                        $indexOfArray: ['$replies.studentId', '$$this.userId'],
+                      },
+                    ],
+                  },
+                ],
               },
             },
           },
@@ -215,9 +171,6 @@ class AnnouncementController {
     ];
 
     const announcements = await Announcement.aggregate(aggregate);
-    // .sort(sort)
-    // .skip(skip)
-    // .limit(limit);
 
     const totalCount = await Announcement.count(query);
 
@@ -299,24 +252,30 @@ class AnnouncementController {
         });
       });
 
-      const queryString = [...courseQuery];
+      let queryString = [...courseQuery];
       if (Object.keys(query).length !== 0) {
         queryString.push(query);
       }
 
-      const deviceTokens = await User.find(
-        { $or: queryString },
-        { _id: 0, deviceToken: 1 }
-      );
+      if (queryString.length) {
+        queryString = { $or: queryString };
+      } else {
+        queryString = {};
+      }
 
-      if (deviceTokens.length) {
+      const deviceTokens = await User.find(queryString, {
+        _id: 0,
+        deviceToken: 1,
+      });
+
+      if (deviceTokens.length && at - new Date().getTime() > 0) {
         await queue.announcement.add(
           {
             id: announcement.id,
             title,
             deviceTokens: deviceTokens.map((item) => item.deviceToken),
           },
-          { jobId: announcement.id, delay: at - Date.now() }
+          { jobId: announcement.id, delay: at - new Date().getTime() }
         );
       }
 
@@ -420,24 +379,33 @@ class AnnouncementController {
       });
     });
 
-    const queryString = [...courseQuery];
+    let queryString = [...courseQuery];
     if (Object.keys(query).length !== 0) {
       queryString.push(query);
     }
 
-    const deviceTokens = await User.find(
-      { $or: queryString },
-      { _id: 0, deviceToken: 1 }
-    );
+    if (queryString.length) {
+      queryString = { $or: queryString };
+    } else {
+      queryString = {};
+    }
 
-    if (deviceTokens.length) {
+    const deviceTokens = await User.find(queryString, {
+      _id: 0,
+      deviceToken: 1,
+    });
+
+    if (deviceTokens.length && announcement.at - new Date().getTime() > 0) {
       await queue.announcement.add(
         {
           id: announcement.id,
           title: announcement.title,
           deviceTokens: deviceTokens.map((item) => item.deviceToken),
         },
-        { jobId: announcement.id, delay: announcement.at - Date.now() }
+        {
+          jobId: announcement.id,
+          delay: announcement.at - new Date().getTime(),
+        }
       );
     }
 
