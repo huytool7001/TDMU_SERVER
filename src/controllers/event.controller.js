@@ -46,14 +46,19 @@ class EventController {
 
       const user = await User.findOne({ userId: event.userId });
       if (user) {
-        queue.event.add(
-          { title: event.title, deviceToken: user.deviceToken },
-          {
-            jobId: event.id,
-            delay:
-              event.start - new Date().getTime() - MS_DIFF - user.timer.event,
-          }
-        );
+        if (
+          event.start - new Date().getTime() - MS_DIFF - user.timer.event >
+          0
+        ) {
+          queue.event.add(
+            { title: event.title, deviceToken: user.deviceToken },
+            {
+              jobId: event.id,
+              delay:
+                event.start - new Date().getTime() - MS_DIFF - user.timer.event,
+            }
+          );
+        }
       }
 
       return res.status(200).json(event);
@@ -83,14 +88,20 @@ class EventController {
         if (job) {
           await job.remove();
         }
-        queue.event.add(
-          { title: event.title, deviceToken: user.deviceToken },
-          {
-            jobId: event.id,
-            delay:
-              event.start - new Date().getTime() - MS_DIFF - user.timer.event,
-          }
-        );
+
+        if (
+          event.start - new Date().getTime() - MS_DIFF - user.timer.event >
+          0
+        ) {
+          queue.event.add(
+            { title: event.title, deviceToken: user.deviceToken },
+            {
+              jobId: event.id,
+              delay:
+                event.start - new Date().getTime() - MS_DIFF - user.timer.event,
+            }
+          );
+        }
       }
     }
 

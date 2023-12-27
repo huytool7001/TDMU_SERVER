@@ -11,7 +11,7 @@ router.route('/:id').get(announcementController.get);
 
 router.route('/').post(upload.array('files'), announcementController.create);
 router.route('/:id/replies').post(announcementController.studentReply);
-router.route('/:id/replies/:studentId').post(announcementController.reply);
+router.route('/:id/replies/:userId').post(announcementController.reply);
 
 router.route('/:id').put(upload.array('files'), announcementController.update);
 

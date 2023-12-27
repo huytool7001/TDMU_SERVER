@@ -11,58 +11,7 @@ class AnnouncementController {
 
   get = async (req, res) => {
     const { id } = req.params;
-    const announcement = await Announcement.aggregate([
-      { $match: { id } },
-      {
-        $lookup: {
-          from: 'user',
-          let: {
-            userIds: {
-              $map: { input: '$replies', as: 'reply', in: '$$reply.studentId' },
-            },
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $in: ['$userId', { $ifNull: ['$$userIds', []] }] },
-              },
-            },
-            {
-              $project: {
-                _id: 0,
-                userId: 1,
-                name: 1,
-                class: 1,
-                faculty: 1,
-              },
-            },
-          ],
-          as: 'read',
-        },
-      },
-      {
-        $addFields: {
-          read: {
-            $map: {
-              input: '$read',
-              in: {
-                $mergeObjects: [
-                  '$$this',
-                  {
-                    $arrayElemAt: [
-                      '$replies',
-                      {
-                        $indexOfArray: ['$replies.studentId', '$$this.userId'],
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-    ]);
+    const announcement = await Announcement.aggregate([{ $match: { id } }]);
     if (!announcement.length) {
       return res.status(400).json({ error: 'Announcement not found' });
     }
@@ -116,59 +65,6 @@ class AnnouncementController {
     if (limit) {
       aggregate.push({ $limit: limit });
     }
-
-    aggregate = [
-      ...aggregate,
-      {
-        $lookup: {
-          from: 'user',
-          let: {
-            userIds: {
-              $map: { input: '$replies', as: 'reply', in: '$$reply.studentId' },
-            },
-          },
-          pipeline: [
-            {
-              $match: {
-                $expr: { $in: ['$userId', { $ifNull: ['$$userIds', []] }] },
-              },
-            },
-            {
-              $project: {
-                _id: 0,
-                userId: 1,
-                name: 1,
-                class: 1,
-                faculty: 1,
-              },
-            },
-          ],
-          as: 'read',
-        },
-      },
-      {
-        $addFields: {
-          read: {
-            $map: {
-              input: '$read',
-              in: {
-                $mergeObjects: [
-                  '$$this',
-                  {
-                    $arrayElemAt: [
-                      '$replies',
-                      {
-                        $indexOfArray: ['$replies.studentId', '$$this.userId'],
-                      },
-                    ],
-                  },
-                ],
-              },
-            },
-          },
-        },
-      },
-    ];
 
     const announcements = await Announcement.aggregate(aggregate);
 
@@ -462,7 +358,9 @@ class AnnouncementController {
 
   studentReply = async (req, res) => {
     const { id } = req.params;
-    const { studentId } = req.body;
+    const { userId } = req.body;
+    const user = await User.findOne({ userId });
+
     const announcement = await Announcement.findOneAndUpdate(
       {
         id,
@@ -474,9 +372,9 @@ class AnnouncementController {
               $cond: [
                 {
                   $in: [
-                    studentId,
+                    userId,
                     {
-                      $ifNull: ['$replies.studentId', []],
+                      $ifNull: ['$replies.userId', []],
                     },
                   ],
                 },
@@ -489,9 +387,14 @@ class AnnouncementController {
                         {
                           $cond: [
                             {
-                              $eq: ['$$this.studentId', studentId],
+                              $eq: ['$$this.userId', userId],
                             },
-                            req.body,
+                            {
+                              ...req.body,
+                              name: user.name,
+                              faculty: user.faculty,
+                              class: user.class,
+                            },
                             {},
                           ],
                         },
@@ -504,7 +407,14 @@ class AnnouncementController {
                     {
                       $ifNull: ['$replies', []],
                     },
-                    [req.body],
+                    [
+                      {
+                        ...req.body,
+                        name: user.name,
+                        faculty: user.faculty,
+                        class: user.class,
+                      },
+                    ],
                   ],
                 },
               ],
@@ -522,12 +432,12 @@ class AnnouncementController {
   };
 
   reply = async (req, res) => {
-    const { id, studentId } = req.params;
+    const { id, userId } = req.params;
     const { from, text } = req.body;
     const announcement = await Announcement.findOneAndUpdate(
       {
         id,
-        'replies.studentId': studentId,
+        'replies.userId': userId,
       },
       {
         $push: {
@@ -541,7 +451,7 @@ class AnnouncementController {
 
     if (from === 'ADMIN') {
       const deviceTokens = await User.find(
-        { userId: studentId },
+        { userId },
         { _id: 0, deviceToken: 1 }
       );
 

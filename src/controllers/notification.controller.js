@@ -16,7 +16,7 @@ class NotificationController {
       student.schedule.forEach((subject) => {
         if (
           date.toDateString() === subject.ngay_hoc.toDateString() &&
-          subject.delay > 0
+          subject.delay - student.timer.schedule - date.getTime() > 0
         ) {
           queue.schedule.add(
             { ...subject, deviceToken: student.deviceToken },
@@ -57,7 +57,7 @@ class NotificationController {
       student.examSchedule.forEach((subject) => {
         if (
           date.toDateString() === subject.ngay_thi.toDateString() &&
-          subject.delay > 0
+          subject.delay - student.timer.exam - date.getTime() > 0
         ) {
           queue.examSchedule.add(
             { ...subject, deviceToken: student.deviceToken },
