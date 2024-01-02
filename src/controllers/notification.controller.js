@@ -9,14 +9,13 @@ class NotificationController {
 
   notifyAllStudentSchedule = async (req, res) => {
     const date = new Date();
-    date.setHours(0, 0, 0, 0);
 
     const students = await User.find();
     for await (let student of students) {
       student.schedule.forEach((subject) => {
         if (
           date.toDateString() === subject.ngay_hoc.toDateString() &&
-          subject.delay - student.timer.schedule - date.getTime() > 0
+          subject.delay - student.timer.schedule - date.getTime() > -1000
         ) {
           queue.schedule.add(
             { ...subject, userId: student.userId },

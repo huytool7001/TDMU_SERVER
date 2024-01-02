@@ -176,8 +176,8 @@ class UserController {
           }
 
           const delay =
-            subject.delay - req.body.timer.schedule - date.getTime();
-          if (delay > 0) {
+          subject.delay - req.body.timer.schedule - date.getTime();
+          if (delay > -1000) {
             queue.schedule.add(
               { ...subject, userId: user.userId },
               {

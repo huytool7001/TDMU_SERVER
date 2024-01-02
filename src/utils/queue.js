@@ -19,7 +19,7 @@ class Queue {
         port: REDIS_PORT,
         host: REDIS_HOST,
         password: REDIS_PASSWORD,
-        tls: {},
+        // tls: {}, // enable on using remote host
         // keepAlive: 10000,
       },
     };
